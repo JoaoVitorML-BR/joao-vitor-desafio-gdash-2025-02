@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    restart: unless-stopped
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  python-collector:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: python-collector
+    environment:
+      - OPENMETEO_LAT=${OPENMETEO_LAT:--23.55052}
+      - OPENMETEO_LON=${OPENMETEO_LON:--46.633308}
+      - OPENMETEO_INTERVAL_MINUTES=${OPENMETEO_INTERVAL_MINUTES:-1}
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-weather_logs_queue}
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
