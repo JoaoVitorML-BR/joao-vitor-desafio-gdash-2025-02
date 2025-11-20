@@ -4,7 +4,10 @@ go 1.23.0
 
 toolchain go1.24.10
 
-require github.com/gin-gonic/gin v1.11.0
+require (
+	github.com/gin-gonic/gin v1.11.0
+	github.com/rabbitmq/amqp091-go v1.6.0
+)
 
 require (
 	github.com/bytedance/sonic v1.14.0 // indirect
