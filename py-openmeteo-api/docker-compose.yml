@@ -13,6 +13,12 @@ services:
     restart: unless-stopped
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
 
   python-collector:
     build:
@@ -26,7 +32,8 @@ services:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
       - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-weather_logs_queue}
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     volumes:
       - ./data:/app/data
     restart: unless-stopped
