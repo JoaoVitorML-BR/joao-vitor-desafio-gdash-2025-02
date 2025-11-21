@@ -15,12 +15,10 @@ func Start() {
 	amqpURL := os.Getenv("RABBITMQ_URL")
 	queue := os.Getenv("RABBITMQ_QUEUE")
 
-	// sanitize env values: trim space and surrounding quotes if present
 	amqpURL = strings.TrimSpace(amqpURL)
 	amqpURL = strings.Trim(amqpURL, `"'`)
 	queue = strings.TrimSpace(queue)
 
-	// validate AMQP URL schema early to avoid noisy runtime errors
 	if amqpURL == "" || !(strings.HasPrefix(amqpURL, "amqp://") || strings.HasPrefix(amqpURL, "amqps://")) {
 		log.Fatalf("bootstrap: invalid RABBITMQ_URL %q; must start with \"amqp://\" or \"amqps://\". Example: amqp://guest:guest@rabbitmq:5672/", amqpURL)
 	}
