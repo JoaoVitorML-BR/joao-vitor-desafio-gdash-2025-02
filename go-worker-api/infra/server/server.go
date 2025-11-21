@@ -1,17 +1,21 @@
 package server
 
 import (
-    "net/http"
-    "github.com/gin-gonic/gin"
+	"net/http"
+
+	"github.com/JoaoVitorML-BR/joao-vitor-desafio-gdash-2025-02/app/routes"
+	"github.com/gin-gonic/gin"
 )
 
 func Start() {
-    r := gin.New()
-    r.Use(gin.Recovery(), gin.Logger())
+	r := gin.New()
+	r.Use(gin.Recovery(), gin.Logger())
 
-    r.GET("/", func(c *gin.Context) {
-        c.String(http.StatusOK, "OK")
-    })
+	r.GET("/", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
 
-    r.Run(":8001")
+	routes.SetupRoutes(r)
+
+	r.Run(":8001")
 }
