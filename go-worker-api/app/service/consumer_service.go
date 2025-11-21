@@ -1,8 +1,11 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"log"
+	"net/http"
+	"os"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -11,12 +14,20 @@ import (
 type Consumer struct {
 	amqpURL string
 	queue   string
+	nestURL string
+	client  *http.Client
 }
 
 func NewConsumer(amqpURL, queue string) *Consumer {
+	nestURL := os.Getenv("NEST_API_URL")
+	if nestURL == "" {
+		nestURL = "http://localhost:3000"
+	}
 	return &Consumer{
 		amqpURL: amqpURL,
 		queue:   queue,
+		nestURL: nestURL,
+		client:  &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
@@ -71,6 +82,12 @@ func (c *Consumer) Run(ctx context.Context) error {
 			defer close(done)
 			for d := range msgs {
 				log.Printf("service: received message: %s", string(d.Body))
+				// Tenta enviar para a API NestJS
+				if err := c.forwardToNest(d.Body); err != nil {
+					log.Printf("service: erro ao enviar para NestJS: %v", err)
+				} else {
+					log.Printf("service: enviado para NestJS com sucesso")
+				}
 				if err := d.Ack(false); err != nil {
 					log.Printf("service: ack error: %v", err)
 				}
@@ -95,4 +112,24 @@ func (c *Consumer) Run(ctx context.Context) error {
 			}
 		}
 	}
+}
+
+// Envia o payload para a API NestJS via HTTP POST
+func (c *Consumer) forwardToNest(payload []byte) error {
+	url := c.nestURL + "/api/weather/logs"
+	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return nil
+	}
+	return err
+
 }
