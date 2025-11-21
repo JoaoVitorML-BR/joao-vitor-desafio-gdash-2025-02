@@ -1,5 +1,5 @@
 {
-  "fetched_at": "2025-11-21T19:55:37+00:00",
+  "fetched_at": "2025-11-21T19:58:57+00:00",
   "latitude": -23.55052,
   "longitude": -46.633308,
   "temperature": 29.4,
@@ -12,7 +12,7 @@
   "raw": {
     "latitude": -23.5,
     "longitude": -46.625,
-    "generationtime_ms": 0.0883340835571289,
+    "generationtime_ms": 0.09548664093017578,
     "utc_offset_seconds": 0,
     "timezone": "GMT",
     "timezone_abbreviation": "GMT",
