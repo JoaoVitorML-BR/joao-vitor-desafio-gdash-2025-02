@@ -71,7 +71,9 @@ func (c *Consumer) Run(ctx context.Context) error {
 			defer close(done)
 			for d := range msgs {
 				log.Printf("service: received message: %s", string(d.Body))
-				// apenas loga, não faz ack/nack, não forward, não salva no store
+				if err := d.Ack(false); err != nil {
+					log.Printf("service: ack error: %v", err)
+				}
 			}
 		}()
 
