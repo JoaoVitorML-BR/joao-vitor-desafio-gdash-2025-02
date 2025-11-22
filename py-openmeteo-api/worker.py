@@ -5,6 +5,7 @@ from typing import Optional
 import config
 import fetcher
 import publisher
+import config
 import storage
 
 LOG = logging.getLogger("weather_worker")
@@ -27,9 +28,15 @@ async def worker_loop():
                     LOG.debug("Falha ao gravar dados localmente", exc_info=True)
 
                 # publish to RabbitMQ
-                sent = await publisher.send_to_rabbitmq(payload, config.RABBITMQ_URL, config.RABBITMQ_QUEUE)
+                sent = await publisher.publish_with_retry(
+                    payload,
+                    config.RABBITMQ_URL,
+                    config.RABBITMQ_QUEUE,
+                    config.PUBLISH_MAX_RETRIES,
+                    config.PUBLISH_BASE_BACKOFF_SECONDS,
+                )
                 if not sent:
-                    LOG.info("Mensagem não enviada — será ignorada (publisher retornou False)")
+                    LOG.warning("Mensagem não publicada após retries. id=%s", payload.get("id"))
             else:
                 LOG.info("Pulando coleta — coordenadas não definidas.")
 

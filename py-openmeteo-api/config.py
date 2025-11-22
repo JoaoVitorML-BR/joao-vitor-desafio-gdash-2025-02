@@ -19,5 +19,9 @@ DATA_DIR = os.getenv("DATA_DIR", "data")
 # Schema version for emitted weather payloads (increment if structure changes)
 SCHEMA_VERSION = int(os.getenv("SCHEMA_VERSION", "1"))
 
+# Publish retry settings
+PUBLISH_MAX_RETRIES = int(os.getenv("PUBLISH_MAX_RETRIES", "3"))
+PUBLISH_BASE_BACKOFF_SECONDS = float(os.getenv("PUBLISH_BASE_BACKOFF_SECONDS", "1.0"))
+
 def coords_defined() -> bool:
     return bool(OPENMETEO_LAT and OPENMETEO_LON)

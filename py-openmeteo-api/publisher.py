@@ -1,5 +1,7 @@
 import json
 import logging
+import random
+import asyncio
 from typing import Optional
 
 import aio_pika
@@ -45,6 +47,26 @@ async def send_to_rabbitmq(payload: dict, url: str, queue_name: str) -> bool:
     except Exception as e:
         LOG.error("Falha ao enviar mensagem para RabbitMQ: %s", e)
         return False
+
+
+async def publish_with_retry(payload: dict, url: str, queue_name: str, max_retries: int, base_backoff: float) -> bool:
+    """Attempt to publish with exponential backoff and jitter.
+
+    Backoff formula (attempt starting at 1): delay = base_backoff * (2 ** (attempt-1)) + jitter(0..0.25)
+    """
+    for attempt in range(1, max_retries + 1):
+        ok = await send_to_rabbitmq(payload, url, queue_name)
+        if ok:
+            if attempt > 1:
+                LOG.info("Publicação bem sucedida após retry (tentativa %d/%d) id=%s", attempt, max_retries, payload.get("id"))
+            return True
+        if attempt == max_retries:
+            break
+        delay = base_backoff * (2 ** (attempt - 1)) + random.uniform(0, 0.25)
+        LOG.warning("Falha publicação (tentativa %d/%d) id=%s – novo retry em %.2fs", attempt, max_retries, payload.get("id"), delay)
+        await asyncio.sleep(delay)
+    LOG.error("Falha definitiva após %d tentativas. id=%s", max_retries, payload.get("id"))
+    return False
 
 
 async def close_publisher():
