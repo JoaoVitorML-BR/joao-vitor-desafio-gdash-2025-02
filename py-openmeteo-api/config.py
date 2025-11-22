@@ -7,7 +7,7 @@ load_dotenv()
 OPENMETEO_LAT = os.getenv("OPENMETEO_LAT")
 OPENMETEO_LON = os.getenv("OPENMETEO_LON")
 
-INTERVAL_MINUTES = int(os.getenv("OPENMETEO_INTERVAL_MINUTES", "60"))
+INTERVAL_MINUTES = int(os.getenv("OPENMETEO_INTERVAL_MINUTES", "1"))
 
 # RabbitMQ settings
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
@@ -15,6 +15,9 @@ RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "weather_logs_queue")
 
 # Local storage
 DATA_DIR = os.getenv("DATA_DIR", "data")
+
+# Schema version for emitted weather payloads (increment if structure changes)
+SCHEMA_VERSION = int(os.getenv("SCHEMA_VERSION", "1"))
 
 def coords_defined() -> bool:
     return bool(OPENMETEO_LAT and OPENMETEO_LON)
