@@ -5,4 +5,4 @@ for /f "usebackq tokens=1,2 delims==" %%A in (".env") do (
     set "%%A=%%B"
 )
 
-go run cmd/worker/main.go
+start /wait go run cmd/worker/main.go
