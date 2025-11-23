@@ -14,9 +14,6 @@ INTERVAL_MINUTES = int(os.getenv("OPENMETEO_INTERVAL_MINUTES", "1"))
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "weather_logs_queue")
 
-# Local storage (unused now, legacy kept)
-DATA_DIR = os.getenv("DATA_DIR", "data")
-
 # Schema versioning for payloads
 SCHEMA_VERSION = int(os.getenv("SCHEMA_VERSION", "1"))
 
