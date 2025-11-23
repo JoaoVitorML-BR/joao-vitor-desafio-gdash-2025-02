@@ -16,11 +16,9 @@ class RabbitPublisher:
         self._connection: Optional[aio_pika.RobustConnection] = None
         self._channel: Optional[aio_pika.RobustChannel] = None
         self._queue: Optional[aio_pika.Queue] = None
-        self._lock = asyncio.Lock()  # evita race em recriação
+        self._lock = asyncio.Lock()
 
     async def _ensure_channel(self):
-        """Garantir conexão + canal + fila ativos.
-        Recria se qualquer parte estiver fechada."""
         async with self._lock:
             recreate = False
             if self._connection is None or getattr(self._connection, "is_closed", True):
@@ -35,7 +33,6 @@ class RabbitPublisher:
                     self._queue = await self._channel.declare_queue(self._queue_name, durable=True)
                 except Exception as e:
                     LOG.error("Erro ao recriar conexão/canal: %s", e)
-                    # Propaga para retry externo
                     raise
 
     async def _publish_once(self, payload: dict) -> bool:
@@ -52,7 +49,6 @@ class RabbitPublisher:
             return True
         except Exception as e:
             LOG.error("Falha ao enviar mensagem (canal possivelmente fechado): %s", e)
-            # Invalida canal para próxima tentativa
             self._channel = None
             return False
 
