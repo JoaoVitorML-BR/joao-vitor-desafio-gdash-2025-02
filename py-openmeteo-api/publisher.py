@@ -8,71 +8,72 @@ import aio_pika
 
 LOG = logging.getLogger("weather_publisher")
 
-_connection: Optional[aio_pika.RobustConnection] = None
-_channel: Optional[aio_pika.RobustChannel] = None
-_queue: Optional[aio_pika.Queue] = None
 
+class RabbitPublisher:
+    def __init__(self, url: str, queue_name: str):
+        self._url = url
+        self._queue_name = queue_name
+        self._connection: Optional[aio_pika.RobustConnection] = None
+        self._channel: Optional[aio_pika.RobustChannel] = None
+        self._queue: Optional[aio_pika.Queue] = None
+        self._lock = asyncio.Lock()  # evita race em recriação
 
-async def _ensure_connection(url: str, queue_name: str):
-    global _connection, _channel, _queue
+    async def _ensure_channel(self):
+        """Garantir conexão + canal + fila ativos.
+        Recria se qualquer parte estiver fechada."""
+        async with self._lock:
+            recreate = False
+            if self._connection is None or getattr(self._connection, "is_closed", True):
+                recreate = True
+            if self._channel is None or getattr(self._channel, "is_closed", True):
+                recreate = True
+            if recreate:
+                LOG.debug("Recriando conexão/canal RabbitMQ")
+                try:
+                    self._connection = await aio_pika.connect_robust(self._url)
+                    self._channel = await self._connection.channel()
+                    self._queue = await self._channel.declare_queue(self._queue_name, durable=True)
+                except Exception as e:
+                    LOG.error("Erro ao recriar conexão/canal: %s", e)
+                    # Propaga para retry externo
+                    raise
 
-    if _connection is not None:
+    async def _publish_once(self, payload: dict) -> bool:
+        await self._ensure_channel()
         try:
-            if not getattr(_connection, "is_closed", False):
-                return
-        except Exception:
-            pass
+            message_body = json.dumps(payload, ensure_ascii=False).encode()
+            message = aio_pika.Message(
+                body=message_body,
+                content_type="application/json",
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            )
+            await self._channel.default_exchange.publish(message, routing_key=self._queue.name)
+            LOG.info("Mensagem enviada para RabbitMQ: %s id=%s", payload.get("fetched_at"), payload.get("id"))
+            return True
+        except Exception as e:
+            LOG.error("Falha ao enviar mensagem (canal possivelmente fechado): %s", e)
+            # Invalida canal para próxima tentativa
+            self._channel = None
+            return False
 
-    _connection = await aio_pika.connect_robust(url)
-    _channel = await _connection.channel()
-    _queue = await _channel.declare_queue(queue_name, durable=True)
-
-
-async def send_to_rabbitmq(payload: dict, url: str, queue_name: str) -> bool:
-    try:
-        await _ensure_connection(url, queue_name)
-
-        message_body = json.dumps(payload, ensure_ascii=False).encode()
-
-        message = aio_pika.Message(
-            body=message_body,
-            content_type="application/json",
-            delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
-        )
-
-        await _channel.default_exchange.publish(message, routing_key=_queue.name)
-        LOG.info("Mensagem enviada para RabbitMQ: %s", payload.get("fetched_at"))
-        return True
-
-    except Exception as e:
-        LOG.error("Falha ao enviar mensagem para RabbitMQ: %s", e)
+    async def publish_with_retry(self, payload: dict, max_retries: int, base_backoff: float) -> bool:
+        for attempt in range(1, max_retries + 1):
+            ok = await self._publish_once(payload)
+            if ok:
+                if attempt > 1:
+                    LOG.info("Publicação bem sucedida após retry (tentativa %d/%d) id=%s", attempt, max_retries, payload.get("id"))
+                return True
+            if attempt == max_retries:
+                break
+            delay = base_backoff * (2 ** (attempt - 1)) + random.uniform(0, 0.25)
+            LOG.warning("Falha publicação (tentativa %d/%d) id=%s – novo retry em %.2fs", attempt, max_retries, payload.get("id"), delay)
+            await asyncio.sleep(delay)
+        LOG.error("Falha definitiva após %d tentativas. id=%s", max_retries, payload.get("id"))
         return False
 
-
-async def publish_with_retry(payload: dict, url: str, queue_name: str, max_retries: int, base_backoff: float) -> bool:
-    """Attempt to publish with exponential backoff and jitter.
-
-    Backoff formula (attempt starting at 1): delay = base_backoff * (2 ** (attempt-1)) + jitter(0..0.25)
-    """
-    for attempt in range(1, max_retries + 1):
-        ok = await send_to_rabbitmq(payload, url, queue_name)
-        if ok:
-            if attempt > 1:
-                LOG.info("Publicação bem sucedida após retry (tentativa %d/%d) id=%s", attempt, max_retries, payload.get("id"))
-            return True
-        if attempt == max_retries:
-            break
-        delay = base_backoff * (2 ** (attempt - 1)) + random.uniform(0, 0.25)
-        LOG.warning("Falha publicação (tentativa %d/%d) id=%s – novo retry em %.2fs", attempt, max_retries, payload.get("id"), delay)
-        await asyncio.sleep(delay)
-    LOG.error("Falha definitiva após %d tentativas. id=%s", max_retries, payload.get("id"))
-    return False
-
-
-async def close_publisher():
-    global _connection
-    if _connection is not None:
-        try:
-            await _connection.close()
-        except Exception:
-            pass
+    async def close(self):
+        if self._connection is not None:
+            try:
+                await self._connection.close()
+            except Exception:
+                pass

@@ -33,7 +33,7 @@ async def worker_loop(publisher: RabbitPublisher):
         except Exception as e:
             LOG.exception("Erro durante o ciclo do worker: %s", e)
 
-        LOG.info("💤 Próxima coleta em %s minutos.", config.INTERVAL_MINUTES)
+        LOG.info("Próxima coleta em %s minutos.", config.INTERVAL_MINUTES)
         await asyncio.sleep(config.INTERVAL_MINUTES * 60)
 
 
