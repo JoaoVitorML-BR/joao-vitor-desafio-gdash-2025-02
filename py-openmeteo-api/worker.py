@@ -1,11 +1,9 @@
 import asyncio
 import logging
-from typing import Optional
 
 import config
 import fetcher
 from publisher import RabbitPublisher
-import config
 
 LOG = logging.getLogger("weather_worker")
 
