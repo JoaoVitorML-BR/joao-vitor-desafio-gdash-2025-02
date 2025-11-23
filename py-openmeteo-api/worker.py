@@ -4,14 +4,13 @@ from typing import Optional
 
 import config
 import fetcher
-import publisher
+from publisher import RabbitPublisher
 import config
-import storage
 
 LOG = logging.getLogger("weather_worker")
 
 
-async def worker_loop():
+async def worker_loop(publisher: RabbitPublisher):
     if not config.coords_defined():
         LOG.warning("Worker aguardando coordenadas serem definidas.")
 
@@ -20,18 +19,9 @@ async def worker_loop():
             if config.coords_defined():
                 payload = await fetcher.fetch_open_meteo(config.OPENMETEO_LAT, config.OPENMETEO_LON)
 
-                # write locally (optional)
-                try:
-                    storage.write_latest(config.DATA_DIR, payload)
-                    storage.append_log(config.DATA_DIR, payload)
-                except Exception:
-                    LOG.debug("Falha ao gravar dados localmente", exc_info=True)
-
                 # publish to RabbitMQ
                 sent = await publisher.publish_with_retry(
                     payload,
-                    config.RABBITMQ_URL,
-                    config.RABBITMQ_QUEUE,
                     config.PUBLISH_MAX_RETRIES,
                     config.PUBLISH_BASE_BACKOFF_SECONDS,
                 )
