@@ -2,11 +2,12 @@ package server
 
 import (
 	"net/http"
-
-	"github.com/JoaoVitorML-BR/joao-vitor-desafio-gdash-2025-02/app/routes"
 	"github.com/gin-gonic/gin"
 )
 
+// Start launches a minimal HTTP server exposing only a health endpoint.
+// The worker no longer serves weather data directly; NestJS API will be
+// responsible for querying persisted weather logs.
 func Start() {
 	r := gin.New()
 	r.Use(gin.Recovery(), gin.Logger())
@@ -15,7 +16,5 @@ func Start() {
 		c.String(http.StatusOK, "OK")
 	})
 
-	routes.SetupRoutes(r)
-
-	r.Run(":8001")
+	_ = r.Run(":8001")
 }
