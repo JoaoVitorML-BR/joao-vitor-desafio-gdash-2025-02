@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime, timezone
+import hashlib
 import httpx
+from . import config
 
 LOG = logging.getLogger("weather_fetcher")
-
 
 async def fetch_open_meteo(lat: str, lon: str) -> dict:
     url = (
@@ -19,7 +20,6 @@ async def fetch_open_meteo(lat: str, lon: str) -> dict:
         data = r.json()
 
     now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
     current = data.get("current_weather", {})
 
     humidity = None
@@ -35,7 +35,12 @@ async def fetch_open_meteo(lat: str, lon: str) -> dict:
     except Exception:
         LOG.debug("Failed to extract hourly humidity/precipitation", exc_info=True)
 
+    raw_id = f"{now_iso}:{lat}:{lon}"
+    payload_id = hashlib.sha256(raw_id.encode()).hexdigest()[:16]
+
     payload = {
+        "id": payload_id,
+        "schema_version": config.SCHEMA_VERSION,
         "fetched_at": now_iso,
         "latitude": float(lat),
         "longitude": float(lon),
