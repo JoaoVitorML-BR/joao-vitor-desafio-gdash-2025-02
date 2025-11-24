@@ -38,4 +38,16 @@ export class WeatherService {
             throw error;
         }
     }
+
+    async findAll(): Promise<WeatherLog[]> {
+        return this.weatherLogModel.find().exec();
+    }
+
+    async findById(id: string): Promise<WeatherLog | null> {
+        return this.weatherLogModel.findById(id).exec();
+    }
+
+    async findByExternalId(externalId: string): Promise<WeatherLog | null> {
+        return this.weatherLogModel.findOne({ externalId }).exec();
+    }
 }
