@@ -1,98 +1,502 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🟢 NestJS Weather API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Modern REST API built with NestJS, providing weather data management, user authentication, and comprehensive API documentation with Swagger.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 Overview
 
-## Description
+This service is responsible for:
+- Receiving and validating weather data from Go Worker
+- Managing user authentication with JWT
+- Storing weather logs in MongoDB
+- Providing REST API for data access
+- Exposing interactive API documentation
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🏗️ Architecture
 
-## Project setup
-
-```bash
-$ npm install
+```
+┌─────────────────┐
+│   Go Worker     │ (HTTP POST /api/weather/logs)
+└────────┬────────┘
+         │ HTTP
+         ▼
+┌─────────────────┐
+│ NestJS API      │
+├─────────────────┤
+│  Controllers    │ ← HTTP Requests
+│  Services       │ ← Business Logic
+│  Schemas        │ ← MongoDB Models
+│  DTOs           │ ← Validation
+│  Guards         │ ← JWT Auth
+└────────┬────────┘
+         │ MongoDB Driver
+         ▼
+┌─────────────────┐
+│   MongoDB       │ (Collections: users, weatherlogs)
+└─────────────────┘
 ```
 
-## Compile and run the project
+### Module Structure
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```
+src/
+├── main.ts                    # Bootstrap
+├── app.module.ts              # Root module
+│
+└── modules/
+    ├── auth/                  # Authentication
+    │   ├── auth.controller.ts
+    │   ├── auth.service.ts
+    │   ├── guards/
+    │   │   ├── jwt-auth.guard.ts
+    │   │   ├── local-auth.guard.ts
+    │   │   └── admin.guard.ts
+    │   ├── strategies/
+    │   │   ├── jwt.strategy.ts
+    │   │   └── local.strategy.ts
+    │   └── dto/
+    │       └── login.dto.ts
+    │
+    ├── users/                 # User management
+    │   ├── users.controller.ts
+    │   ├── users.service.ts
+    │   ├── schemas/
+    │   │   └── user.schema.ts
+    │   └── dto/
+    │       ├── create-user.dto.ts
+    │       ├── update-user.dto.ts
+    │       └── user-response.dto.ts
+    │
+    └── weather/               # Weather logs
+        ├── weather.controller.ts
+        ├── weather.service.ts
+        ├── schemas/
+        │   └── weather-log.schema.ts
+        └── dto/
+            ├── create-weather-log.dto.ts
+            └── update-weather-log.dto.ts
 ```
 
-## Run tests
+## 📦 Technologies
+
+- **NestJS 11**: Modern Node.js framework
+- **TypeScript 5**: Type-safe development
+- **MongoDB 6**: NoSQL database
+- **Mongoose**: ODM for MongoDB
+- **Passport JWT**: Authentication strategy
+- **class-validator**: DTO validation
+- **Swagger/OpenAPI**: API documentation
+
+## 🚀 Quick Start
+
+### Using Docker (Recommended)
 
 ```bash
-# unit tests
-$ npm run test
+# Individual development
+cd nest-weather-api
+docker-compose up -d
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# View logs
+docker-compose logs -f nest-api
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Local Development
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Install dependencies
+npm install
+
+# Development mode (hot reload)
+npm run start:dev
+
+# Production mode
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🌍 Environment Variables
 
-## Resources
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NODE_ENV` | Environment mode | `development` |
+| `PORT` | Server port | `9090` |
+| `MONGO_URI` | MongoDB connection string | `mongodb://admin:12345@mongodb:27017/weather_data?authSource=admin` |
+| `JWT_SECRET` | Secret for JWT signing | (required) |
+| `API_VERSION` | API version prefix | `v1` |
 
-Check out a few resources that may come in handy when working with NestJS:
+## 📚 API Endpoints
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### 🔓 Public Endpoints
 
-## Support
+#### Authentication
+```bash
+# Register new user
+POST /api/auth/register
+Content-Type: application/json
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "secure123",
+  "role": "user"  # Optional: "user" | "admin"
+}
 
-## Stay in touch
+# Login
+POST /api/auth/login
+Content-Type: application/json
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+{
+  "username": "john_doe",
+  "password": "secure123"
+}
 
-## License
+Response:
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+#### Weather Logs (Write)
+```bash
+# Create weather log (used by Go Worker)
+POST /api/weather/logs
+Content-Type: application/json
+
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "fetched_at": "2025-11-24T10:30:00Z",
+  "latitude": -9.747399554832585,
+  "longitude": -36.666791770043595,
+  "temperature": 28.5,
+  "humidity": 65.2,
+  "precipitation_probability": 15.0
+}
+```
+
+### 🔒 Protected Endpoints (Require JWT)
+
+#### Users
+```bash
+# List all users (admin only)
+GET /api/users
+Authorization: Bearer YOUR_TOKEN
+
+# Get user by ID
+GET /api/users/:id
+Authorization: Bearer YOUR_TOKEN
+
+# Create user (admin only)
+POST /api/users
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "username": "new_user",
+  "email": "user@example.com",
+  "password": "pass123",
+  "role": "user"
+}
+
+# Update user
+PATCH /api/users/:id
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com"
+}
+
+# Delete user (admin only)
+DELETE /api/users/:id
+Authorization: Bearer YOUR_TOKEN
+```
+
+#### Weather Logs (Read)
+```bash
+# List all weather logs
+GET /api/weather/logs
+Authorization: Bearer YOUR_TOKEN
+
+# Query parameters:
+# - page: number (default: 1)
+# - limit: number (default: 10)
+# - sortBy: string (default: "fetchedAt")
+# - order: "asc" | "desc" (default: "desc")
+
+# Get weather log by ID
+GET /api/weather/logs/:id
+Authorization: Bearer YOUR_TOKEN
+
+# Delete weather log (admin only)
+DELETE /api/weather/logs/:id
+Authorization: Bearer YOUR_TOKEN
+```
+
+## 📊 Data Models
+
+### User Schema
+```typescript
+{
+  username: string;      // Unique, required
+  email: string;         // Unique, required, validated
+  password: string;      // Hashed with bcrypt
+  role: "user" | "admin"; // Default: "user"
+  createdAt: Date;       // Auto-generated
+  updatedAt: Date;       // Auto-updated
+}
+```
+
+### Weather Log Schema
+```typescript
+{
+  externalId: string;    // From Go Worker (id field)
+  fetchedAt: Date;       // Timestamp of data collection
+  latitude: number;      // -90 to 90
+  longitude: number;     // -180 to 180
+  temperature: number;   // °C
+  humidity: number;      // % (0-100)
+  precipitationProbability: number; // % (0-100)
+  createdAt: Date;       // Auto-generated
+  updatedAt: Date;       // Auto-updated
+}
+
+// Composite index: { fetchedAt: -1, latitude: 1, longitude: 1 }
+```
+
+## 🔐 Authentication & Authorization
+
+### JWT Strategy
+- **Algorithm**: HS256
+- **Expiration**: Configurable (default: 1h)
+- **Payload**: `{ sub: userId, username, role }`
+
+### Guards
+
+#### `JwtAuthGuard`
+Validates JWT token presence and validity.
+
+```typescript
+@UseGuards(JwtAuthGuard)
+@Get('profile')
+getProfile(@Request() req) {
+  return req.user; // { userId, username, role }
+}
+```
+
+#### `AdminGuard`
+Ensures user has admin role.
+
+```typescript
+@UseGuards(JwtAuthGuard, AdminGuard)
+@Delete(':id')
+deleteUser(@Param('id') id: string) {
+  return this.usersService.remove(id);
+}
+```
+
+#### `LocalAuthGuard`
+Validates username/password for login.
+
+```typescript
+@UseGuards(LocalAuthGuard)
+@Post('login')
+login(@Request() req) {
+  return this.authService.login(req.user);
+}
+```
+
+## 📝 DTOs & Validation
+
+### Create Weather Log DTO
+```typescript
+class CreateWeatherLogDto {
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @IsISO8601()
+  fetched_at: string;
+
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude: number;
+
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude: number;
+
+  @IsNumber()
+  temperature: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  humidity: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  precipitation_probability: number;
+}
+```
+
+### Create User DTO
+```typescript
+class CreateUserDto {
+  @IsString()
+  @MinLength(3)
+  @MaxLength(30)
+  username: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(6)
+  password: string;
+
+  @IsOptional()
+  @IsEnum(['user', 'admin'])
+  role?: string;
+}
+```
+
+## 🌐 Swagger Documentation
+
+### Access
+http://localhost:9090/api
+
+### Features
+- **Interactive UI**: Test endpoints directly
+- **Authentication**: JWT bearer token support
+- **Schemas**: Request/response examples
+- **Try it out**: Execute real API calls
+
+### Configuration
+```typescript
+// main.ts
+const config = new DocumentBuilder()
+  .setTitle('Weather Monitoring API')
+  .setDescription('Real-time weather data collection and management')
+  .setVersion('1.0')
+  .addTag('auth', 'Authentication endpoints')
+  .addTag('users', 'User management')
+  .addTag('weather', 'Weather logs')
+  .addBearerAuth()
+  .build();
+```
+
+## 🐛 Troubleshooting
+
+### Cannot connect to MongoDB
+```bash
+# Check MongoDB is running
+docker ps | grep mongodb
+
+# Test connection
+docker exec -it gdash-mongodb mongosh \
+  -u admin -p 12345 --authenticationDatabase admin
+
+# Check logs
+docker-compose logs mongodb
+```
+
+### JWT validation errors
+```bash
+# Verify JWT_SECRET is set
+echo $JWT_SECRET
+
+# Test token generation
+curl -X POST http://localhost:9090/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"senha123"}'
+
+# Decode token (jwt.io)
+```
+
+### Validation errors
+```bash
+# Check DTO definitions match request body
+# Enable validation pipe globally in main.ts:
+app.useGlobalPipes(new ValidationPipe({
+  whitelist: true,
+  forbidNonWhitelisted: true,
+  transform: true,
+}));
+```
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# E2E tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+### Example E2E Test
+```typescript
+describe('Weather Logs (e2e)', () => {
+  let authToken: string;
+
+  beforeAll(async () => {
+    // Login and get token
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ username: 'admin', password: 'senha123' });
+    authToken = response.body.access_token;
+  });
+
+  it('/api/weather/logs (GET) - should return weather logs', () => {
+    return request(app.getHttpServer())
+      .get('/api/weather/logs')
+      .set('Authorization', `Bearer ${authToken}`)
+      .expect(200)
+      .expect((res) => {
+        expect(Array.isArray(res.body)).toBe(true);
+      });
+  });
+});
+```
+
+## 📈 Performance
+
+### Database Indexes
+- `users`: `username` (unique), `email` (unique)
+- `weatherlogs`: `{ fetchedAt: -1, latitude: 1, longitude: 1 }` (compound)
+
+### Optimization Tips
+- Use pagination for large datasets
+- Enable MongoDB connection pooling
+- Implement caching for frequently accessed data
+- Use projection to return only needed fields
+
+## 🔗 Integration
+
+**Upstream producers:**
+- **Go Worker** (`go-worker-api`) sends weather data via HTTP POST
+
+**Downstream consumers:**
+- **Frontend** (future) will consume REST API
+- **Analytics tools** can query aggregated data
+
+**Infrastructure dependencies:**
+- MongoDB (data persistence)
+- JWT secret (authentication)
+
+## 📖 References
+
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [Passport JWT Strategy](http://www.passportjs.org/packages/passport-jwt/)
+- [Mongoose ODM](https://mongoosejs.com/)
+- [class-validator](https://github.com/typestack/class-validator)
+- [Swagger/OpenAPI](https://swagger.io/specification/)
+
+---
+
+[← Back to main README](../README.md)
