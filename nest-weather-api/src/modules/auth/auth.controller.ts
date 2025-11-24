@@ -6,9 +6,10 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AdminGuard } from './guards/admin.guard';
 import { UsersService } from '../users/users.service';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import { API_BASE_PATH } from '../../common/constants/api.constants';
 
 @ApiTags('Autenticação')
-@Controller('auth')
+@Controller(`${API_BASE_PATH}/auth`)
 export class AuthController {
   constructor(
     private authService: AuthService,
