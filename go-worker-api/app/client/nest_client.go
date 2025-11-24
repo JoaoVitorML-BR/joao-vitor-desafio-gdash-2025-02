@@ -31,7 +31,7 @@ func NewNestClient() *NestClient {
 
 // SendWeatherData sends weather data to the NestJS API
 func (nc *NestClient) SendWeatherData(payload []byte) error {
-	url := nc.baseURL + "/api/weather/logs"
+	url := nc.baseURL + "/api/v1/weather/logs"
 
 	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
 	if err != nil {
