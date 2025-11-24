@@ -1,0 +1,52 @@
+# @format
+
+services:
+  mongodb:
+    container_name: nest-weather-api-db-1
+    image: mongo:6
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_PASS}
+      MONGO_INITDB_DATABASE: ${DB_NAME}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  api:
+    build: .
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
+      MONGO_URI: mongodb://${DB_USER}:${DB_PASS}@mongodb:27017/${DB_NAME}?authSource=admin
+    ports:
+      - "9090:9090"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    ports:
+      - "9091:9091"
+    environment:
+      PORT: 9091
+      ME_CONFIG_BASICAUTH: 'false'
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: 'true'
+      ME_CONFIG_MONGODB_URL: mongodb://${DB_USER}:${DB_PASS}@mongodb:27017/${DB_NAME}?authSource=admin
+
+volumes:
+  mongo_data:
