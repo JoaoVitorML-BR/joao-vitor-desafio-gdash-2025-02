@@ -1,0 +1,156 @@
+version: '3.8'
+
+# ============================================
+# DOCKER COMPOSE UNIFICATE - GDASH 2025
+# ============================================
+# This docker-compose.yml file is intended to run the entire GDASH 2025 system,
+# For individual development, use the docker-compose.yml files in each folder.
+#
+# Usage:
+#   docker-compose up -d          # Start everything
+#   docker-compose logs -f [srv]  # View logs
+#   docker-compose down           # Stop everything
+# ============================================
+
+services:
+  # ============================================
+  # SHARED INFRASTRUCTURE
+  # ============================================
+  
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: gdash-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gdash-network
+
+  mongodb:
+    image: mongo:6
+    container_name: gdash-mongodb
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: 12345
+      MONGO_INITDB_DATABASE: weather_data
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gdash-network
+
+  mongo-express:
+    image: mongo-express
+    container_name: gdash-mongo-express
+    restart: always
+    depends_on:
+      - mongodb
+    ports:
+      - "9091:9091"
+    environment:
+      PORT: 9091
+      ME_CONFIG_BASICAUTH: 'false'
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: 'true'
+      ME_CONFIG_MONGODB_URL: mongodb://admin:12345@mongodb:27017/weather_data?authSource=admin
+    networks:
+      - gdash-network
+
+  # ============================================
+  # MICROSERVIÇOS
+  # ============================================
+
+  python-collector:
+    build:
+      context: ./py-openmeteo-api
+      dockerfile: Dockerfile
+    container_name: gdash-python-collector
+    environment:
+      - OPENMETEO_LAT=-9.747399554832585
+      - OPENMETEO_LON=-36.666791770043595
+      - OPENMETEO_INTERVAL_MINUTES=1
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_QUEUE=weather_logs_queue
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - gdash-network
+
+  go-worker:
+    build:
+      context: ./go-worker-api
+      dockerfile: Dockerfile
+    container_name: gdash-go-worker
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_QUEUE=weather_logs_queue
+      - NEST_API_URL=http://nest-api:9090
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      nest-api:
+        condition: service_started
+    restart: unless-stopped
+    ports:
+      - "8001:8001"  # Health check endpoint
+    networks:
+      - gdash-network
+
+  nest-api:
+    build:
+      context: ./nest-weather-api
+      dockerfile: Dockerfile
+    container_name: gdash-nest-api
+    environment:
+      - NODE_ENV=development
+      - PORT=9090
+      - MONGO_URI=mongodb://admin:12345@mongodb:27017/weather_data?authSource=admin
+      - JWT_SECRET=weather_data_jwt_secret_2025_7x9k2m5n8q1w4e6r3t7y9u0i2o5p8a1s
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=300
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "9090:9090"  # API
+    volumes:
+      - ./nest-weather-api:/app
+      - /app/node_modules
+    networks:
+      - gdash-network
+
+# ============================================
+# VOLUMES
+# ============================================
+volumes:
+  rabbitmq_data:
+    name: gdash-rabbitmq-data
+  mongo_data:
+    name: gdash-mongo-data
+
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  gdash-network:
+    name: gdash-network
+    driver: bridge
