@@ -15,18 +15,12 @@ export class WeatherService {
         try {
             const weatherLog = new this.weatherLogModel({
                 externalId: dto.id,
-                schemaVersion: dto.schema_version,
                 fetchedAt: new Date(dto.fetched_at),
                 latitude: dto.latitude,
                 longitude: dto.longitude,
                 temperature: dto.temperature,
-                windSpeed: dto.wind_speed,
-                windDirection: dto.wind_direction,
-                weatherCode: dto.weather_code,
                 humidity: dto.humidity,
                 precipitationProbability: dto.precipitation_probability,
-                source: dto.source || 'OpenMeteo',
-                raw: dto.raw,
             });
 
             const saved = await weatherLog.save();
