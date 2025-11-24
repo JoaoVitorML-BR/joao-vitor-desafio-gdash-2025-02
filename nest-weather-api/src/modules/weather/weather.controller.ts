@@ -2,9 +2,10 @@ import { Controller, Get, Post, Body, Param, Query, HttpCode, HttpStatus } from 
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WeatherService } from './weather.service';
 import { CreateWeatherLogDto } from './dto/create-weather-log.dto';
+import { API_BASE_PATH } from '../../common/constants/api.constants';
 
 @ApiTags('weather')
-@Controller('api/weather')
+@Controller(`${API_BASE_PATH}/weather`)
 export class WeatherController {
     constructor(private readonly weatherService: WeatherService) { }
 
@@ -15,5 +16,28 @@ export class WeatherController {
     @ApiResponse({ status: 409, description: 'Registro duplicado' })
     async create(@Body() createDto: CreateWeatherLogDto) {
         return this.weatherService.create(createDto);
+    }
+
+    @Get('logs')
+    @ApiOperation({ summary: 'Obter todos os registros climáticos' })
+    @ApiResponse({ status: 200, description: 'Lista de registros climáticos retornada com sucesso' })
+    async findAll() {
+        return this.weatherService.findAll();
+    }
+
+    @Get('logs/:id')
+    @ApiOperation({ summary: 'Obter um registro climático por ID interno' })
+    @ApiResponse({ status: 200, description: 'Registro climático retornado com sucesso' })
+    @ApiResponse({ status: 404, description: 'Registro climático não encontrado' })
+    async findById(@Param('id') id: string) {
+        return this.weatherService.findById(id);
+    }
+
+    @Get('logs/external/:externalId')
+    @ApiOperation({ summary: 'Obter um registro climático por ID externo' })
+    @ApiResponse({ status: 200, description: 'Registro climático retornado com sucesso' })
+    @ApiResponse({ status: 404, description: 'Registro climático não encontrado' })
+    async findByExternalId(@Param('externalId') externalId: string) {
+        return this.weatherService.findByExternalId(externalId);
     }
 }
