@@ -1,16 +1,13 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
-	"io"
 	"log"
-	"net/http"
-	"os"
 	"time"
 
+	"github.com/JoaoVitorML-BR/joao-vitor-desafio-gdash-2025-02/app/client"
+	"github.com/JoaoVitorML-BR/joao-vitor-desafio-gdash-2025-02/app/transformer"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -20,28 +17,26 @@ const (
 	ConsumeRetryDelay = 5 * time.Second
 )
 
+// Consumer response of the RabbitMQ message consumption service
 type Consumer struct {
-	amqpURL string
-	queue   string
-	nestURL string
-	client  *http.Client
+	amqpURL     string
+	queue       string
+	nestClient  *client.NestClient
+	transformer *transformer.WeatherTransformer
 }
 
+// NewConsumer creates a new instance of the Consumer
 func NewConsumer(amqpURL, queue string) *Consumer {
-	nestURL := os.Getenv("NEST_API_URL")
-	if nestURL == "" {
-		nestURL = "http://localhost:9090"
-	}
 	return &Consumer{
-		amqpURL: amqpURL,
-		queue:   queue,
-		nestURL: nestURL,
-		client:  &http.Client{Timeout: 10 * time.Second},
+		amqpURL:     amqpURL,
+		queue:       queue,
+		nestClient:  client.NewNestClient(),
+		transformer: transformer.NewWeatherTransformer(),
 	}
 }
 
 func handleErrorAndDelay(ctx context.Context, duration time.Duration, msg string, err error) error {
-	log.Printf("service: %s: %v — reconectando em %s", msg, err, duration)
+	log.Printf("service: %s: %v — reconnecting in %s", msg, err, duration)
 	select {
 	case <-time.After(duration):
 		return nil
@@ -51,7 +46,7 @@ func handleErrorAndDelay(ctx context.Context, duration time.Duration, msg string
 }
 
 func (c *Consumer) connectAndConsume(ctx context.Context) error {
-	log.Printf("service: Tentando conectar ao RabbitMQ...")
+	log.Printf("service: Trying to connect to RabbitMQ...")
 
 	conn, err := amqp.Dial(c.amqpURL)
 	if err != nil {
@@ -61,7 +56,7 @@ func (c *Consumer) connectAndConsume(ctx context.Context) error {
 
 	go func() {
 		if closeErr := <-conn.NotifyClose(make(chan *amqp.Error)); closeErr != nil {
-			log.Printf("service: conexão AMQP fechada inesperadamente: %v", closeErr)
+			log.Printf("service: AMQP connection closed unexpectedly: %v", closeErr)
 		}
 	}()
 
@@ -76,7 +71,7 @@ func (c *Consumer) connectAndConsume(ctx context.Context) error {
 		return handleErrorAndDelay(ctx, ConsumeRetryDelay, "consume error", err)
 	}
 
-	log.Printf("service: ✅ Conectado e consumindo de %s", c.queue)
+	log.Printf("service: Connected and consuming from %s", c.queue)
 
 	for {
 		select {
@@ -84,7 +79,7 @@ func (c *Consumer) connectAndConsume(ctx context.Context) error {
 			return ctx.Err()
 		case d, ok := <-msgs:
 			if !ok {
-				log.Printf("service: Canal de mensagens AMQP fechou inesperadamente.")
+				log.Printf("service: AMQP message channel closed unexpectedly.")
 				return errors.New("AMQP message channel closed")
 			}
 			go c.processMessage(d)
@@ -115,15 +110,15 @@ func (c *Consumer) Run(ctx context.Context) error {
 	}
 }
 
-// processMessage response for a single message delivery.
+// processMessage processes a single message from RabbitMQ
 func (c *Consumer) processMessage(d amqp.Delivery) {
-	log.Printf("service: received message: %s", string(d.Body))
+	log.Printf("service: message received (%d bytes)", len(d.Body))
 
 	var lastErr error
 	for attempt := 1; attempt <= MaxRetries; attempt++ {
 		err := c.forwardToNest(d.Body)
 		if err == nil {
-			log.Printf("service: enviado para NestJS com sucesso (tentativa %d)", attempt)
+			log.Printf("service: sent to NestJS successfully (attempt %d)", attempt)
 			if err := d.Ack(false); err != nil {
 				log.Printf("service: ack error: %v", err)
 			}
@@ -132,40 +127,38 @@ func (c *Consumer) processMessage(d amqp.Delivery) {
 
 		lastErr = err
 		if attempt < MaxRetries {
-			log.Printf("service: erro ao enviar para NestJS (tentativa %d/%d): %v. Esperando %s.", attempt, MaxRetries, err, ReconnectDelay)
+			log.Printf("service: error sending to NestJS (attempt %d/%d): %v. Waiting %s.", attempt, MaxRetries, err, ReconnectDelay)
 			time.Sleep(ReconnectDelay)
 		} else {
-			log.Printf("service: erro final ao enviar para NestJS (tentativa %d/%d): %v.", attempt, MaxRetries, err)
+			log.Printf("service: final error sending to NestJS (attempt %d/%d): %v.", attempt, MaxRetries, err)
 		}
 	}
 
 	if lastErr != nil {
-		log.Printf("service: todas as tentativas falharam, re-enfileirando mensagem.")
+		log.Printf("service: all attempts failed, re-queuing message.")
 		if err := d.Nack(false, true); err != nil {
 			log.Printf("service: nack error: %v", err)
 		}
 	}
 }
 
-// forwardToNest sends the payload to the NestJS API.
+// forwardToNest transforms and sends data to the NestJS API
 func (c *Consumer) forwardToNest(payload []byte) error {
-	url := c.nestURL + "/api/weather/logs"
-	req, err := http.NewRequest("POST", url, bytes.NewReader(payload))
+	// Transform full data into simplified data
+	simplifiedData, err := c.transformer.ParseAndSimplify(payload)
 	if err != nil {
-		return fmt.Errorf("creating request: %w", err)
+		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.client.Do(req)
+	// Convert to JSON
+	simplifiedPayload, err := c.transformer.ToJSON(simplifiedData)
 	if err != nil {
-		return fmt.Errorf("executing request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		return nil
+		return err
 	}
 
-	bodyBytes, _ := io.ReadAll(resp.Body)
-	return fmt.Errorf("HTTP request failed with status: %d. Response: %s", resp.StatusCode, string(bodyBytes))
+	log.Printf("service: dados transformados (original: %d bytes → simplificado: %d bytes)",
+		len(payload), len(simplifiedPayload))
+
+	// Send to NestJS
+	return c.nestClient.SendWeatherData(simplifiedPayload)
 }
