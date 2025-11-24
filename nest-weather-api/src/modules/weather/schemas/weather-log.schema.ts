@@ -8,9 +8,6 @@ export class WeatherLog {
     @Prop({ required: true, unique: true, index: true })
     externalId: string;
 
-    @Prop({ required: true })
-    schemaVersion: number;
-
     @Prop({ required: true, type: Date, index: true })
     fetchedAt: Date;
 
@@ -24,25 +21,10 @@ export class WeatherLog {
     temperature: number;
 
     @Prop()
-    windSpeed?: number;
-
-    @Prop()
-    windDirection?: number;
-
-    @Prop()
-    weatherCode?: number;
-
-    @Prop()
     humidity?: number;
 
     @Prop()
     precipitationProbability?: number;
-
-    @Prop({ default: 'OpenMeteo' })
-    source: string;
-
-    @Prop({ type: Object })
-    raw?: Record<string, any>;
 }
 
 export const WeatherLogSchema = SchemaFactory.createForClass(WeatherLog);
