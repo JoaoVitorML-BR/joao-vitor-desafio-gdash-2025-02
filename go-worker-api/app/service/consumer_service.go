@@ -30,7 +30,7 @@ type Consumer struct {
 func NewConsumer(amqpURL, queue string) *Consumer {
 	nestURL := os.Getenv("NEST_API_URL")
 	if nestURL == "" {
-		nestURL = "http://localhost:3000"
+		nestURL = "http://localhost:9090"
 	}
 	return &Consumer{
 		amqpURL: amqpURL,
