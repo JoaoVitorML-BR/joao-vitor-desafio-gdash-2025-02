@@ -11,11 +11,6 @@ export const authService = {
                 password
             });
 
-            if (response.data.access_token) {
-                localStorage.setItem('gdash_access_token', response.data.access_token);
-                localStorage.setItem('gdash_user', JSON.stringify(response.data.user));
-            }
-
             return response.data;
         } catch (error) {
             if (error instanceof AxiosError && error.response) {
