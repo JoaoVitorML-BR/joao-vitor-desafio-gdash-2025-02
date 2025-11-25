@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +11,8 @@ import type { ApiErrorResponse } from '@/types/api.types';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
+    const navigate = useNavigate();
+    const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -21,14 +25,16 @@ export default function LoginPage() {
 
         try {
             const response = await authService.login(email, password);
+            
+            // Salva no contexto de autenticação
+            login(response.access_token, response.user);
+            
             toast.success('Login realizado com sucesso!', {
                 description: `Bem-vindo, ${response.user.name}!`,
             });
 
             setTimeout(() => {
-                console.log('Redirecionando para dashboard...');
-                // TODO: Implementar navegação
-                // navigate('/dashboard');
+                navigate('/home');
             }, 1500);
 
         } catch (error) {
