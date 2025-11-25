@@ -16,12 +16,23 @@ export interface RegisterRequest {
 }
 
 export interface User {
-    _id: string;
+    id: string;
     name: string;
     email: string;
     role: 'admin' | 'user';
     createdAt?: string;
     updatedAt?: string;
+}
+
+// Auth Context Types
+export interface AuthContextType {
+    user: User | null;
+    token: string | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+    login: (token: string, userData: User) => void;
+    logout: () => void;
+    checkAuth: () => boolean;
 }
 
 // API Error Types
