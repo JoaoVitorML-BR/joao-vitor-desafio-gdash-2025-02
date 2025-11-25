@@ -1,5 +1,6 @@
 import { Cloud, UserPlus, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,6 +13,7 @@ import { Button } from '@/components/ui/button';
 
 export default function Navbar() {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     return (
         <nav className="w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
@@ -37,7 +39,10 @@ export default function Navbar() {
                             <DropdownMenuContent align="end" className="w-48">
                                 <DropdownMenuLabel>Administração</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="gap-2 cursor-pointer">
+                                <DropdownMenuItem
+                                    className="gap-2 cursor-pointer"
+                                    onClick={() => navigate('/users/create')}
+                                >
                                     <UserPlus className="w-4 h-4" />
                                     <span>Cadastrar Usuário</span>
                                 </DropdownMenuItem>
