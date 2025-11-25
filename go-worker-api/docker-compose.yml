@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    container_name: gdash-rabbitmq-dev
+    ports:
+      - "5672:5672"   
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: 12345
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - go-worker-network
+
+  # ============================================
+  # GO WORKER
+  # ============================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gdash-go-worker-dev
+    ports:
+      - "8001:8001"
+    environment:
+      RABBITMQ_URL: amqp://admin:12345@rabbitmq:5672/
+      NEST_API_URL: ${NEST_API_URL:-http://host.docker.internal:9090}
+      PORT: 8001
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - go-worker-network
+
+networks:
+  go-worker-network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:
