@@ -382,14 +382,6 @@ Access the interactive documentation at: http://localhost:9090/api
 - `GET /api/weather/logs/:id` - Get specific log
 - `DELETE /api/weather/logs/:id` - Delete log (admin)
 
-## 🤝 Contributing
-
-1. Fork the project
-2. Create a feature branch (`git checkout -b feat/new-feature`)
-3. Commit your changes (`git commit -m 'feat: add new feature'`)
-4. Push to the branch (`git push origin feat/new-feature`)
-5. Open a Pull Request
-
 ### Commit Convention
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/):
@@ -411,5 +403,3 @@ This project was developed for the GDASH 2025-02 challenge.
 - GitHub: [@JoaoVitorML-BR](https://github.com/JoaoVitorML-BR)
 
 ---
-
-**Developed with ☕ for GDASH 2025**
