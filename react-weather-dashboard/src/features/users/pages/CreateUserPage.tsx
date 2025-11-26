@@ -10,6 +10,14 @@ import { userService } from '@/services/user.service';
 import type { ApiErrorResponse } from '@/types/api.types';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+
 export default function CreateUserPage() {
     const navigate = useNavigate();
     const [name, setName] = useState('');
@@ -17,13 +25,19 @@ export default function CreateUserPage() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [userType, setUserType] = useState('user');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
         try {
-            await userService.create(name, email, password);
+
+            if (userType === 'admin') {
+                await userService.createAdmin(name, email, password);
+            } else if (userType === "user") {
+                await userService.create(name, email, password);
+            }
 
             toast.success('Usuário criado com sucesso!', {
                 description: `${name} foi adicionado ao sistema.`,
@@ -96,6 +110,22 @@ export default function CreateUserPage() {
                         </CardHeader>
                         <CardContent>
                             <form onSubmit={handleSubmit} className="space-y-6">
+                                {/*User type*/}
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium">
+                                        Tipo de Usuário
+                                    </Label>
+                                    <Select value={userType} onValueChange={setUserType}>
+                                        <SelectTrigger className="w-[180px]">
+                                            <SelectValue placeholder="Tipo de Usuário" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="user">Usuário</SelectItem>
+                                            <SelectItem value="admin">Administrador</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
                                 {/* Complet name */}
                                 <div className="space-y-2">
                                     <Label htmlFor="name" className="text-sm font-medium">
