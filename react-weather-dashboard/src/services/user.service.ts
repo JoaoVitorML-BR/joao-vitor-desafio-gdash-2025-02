@@ -79,5 +79,54 @@ export const userService = {
                 statusCode: 0,
             } as ApiErrorResponse;
         }
+    },
+
+    update: async (id: string, data: { name?: string; email?: string; password?: string; role?: string }) => {
+        try {
+            const response = await appClient.patch(`${API_VERSION}/users/${id}`, data, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            return response.data;
+        } catch (error) {
+            if (error instanceof AxiosError && error.response) {
+                throw {
+                    message: error.response.data?.message || 'Erro ao atualizar usuário',
+                    statusCode: error.response.status,
+                    error: error.response.data?.error,
+                } as ApiErrorResponse;
+            }
+            throw {
+                message: 'Erro de conexão com o servidor',
+                statusCode: 0,
+            } as ApiErrorResponse;
+        }
+    },
+
+    delete: async (id: string) => {
+        try {
+            const response = await appClient.delete(`${API_VERSION}/users/${id}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+            console.log('Delete response:', response.data);
+            return response.data;
+        } catch (error) {
+            if (error instanceof AxiosError && error.response) {
+                throw {
+                    message: error.response.data?.message || 'Erro ao excluir usuário',
+                    statusCode: error.response.status,
+                    error: error.response.data?.error,
+                } as ApiErrorResponse;
+            }
+            throw {
+                message: 'Erro de conexão com o servidor',
+                statusCode: 0,
+            } as ApiErrorResponse;
+        }
     }
 };
