@@ -73,4 +73,9 @@ export class UsersService {
   async findByRole(role: string): Promise<UserDocument[]> {
     return this.userModel.find({ role }).exec();
   }
+
+  async isAdminMaster(userId: string): Promise<boolean> {
+    const user = await this.userModel.findById(userId).exec();
+    return user?.role === 'admin-master';
+  }
 }
