@@ -5,8 +5,8 @@ import {
   ForbiddenException,
   Get,
   Param,
+  Patch,
   Post,
-  Put,
   Req,
   UseGuards,
   UsePipes,
@@ -106,17 +106,38 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Usuário excluído com sucesso.' })
   @ApiResponse({ status: 403, description: 'Sem permissão para deletar este usuário.' })
   async deleteUser(@Param('id') id: string, @Req() req) {
-    const user = req.user;
-    if (user.userId !== id && user.role !== 'admin') {
-      throw new ForbiddenException('Você não tem permissão para deletar este usuário.');
+    const currentUser = req.user;
+    const targetUser = await this.usersService.findById(id);
+    const isAdminMaster = currentUser.role === 'admin-master';
+    const isAdmin = currentUser.role === 'admin';
+    const isSelf = currentUser.userId === id;
+
+    // Não pode deletar a si mesmo
+    if (isSelf) {
+      throw new ForbiddenException('Você não pode deletar sua própria conta.');
     }
 
-    await this.usersService.remove(id);
-    return { message: 'Usuário excluído com sucesso' };
+    // Admin-master pode deletar qualquer um (exceto ele mesmo)
+    if (isAdminMaster) {
+      await this.usersService.remove(id);
+      return { message: 'Usuário excluído com sucesso' };
+    }
+
+    // Admin pode deletar apenas usuários comuns
+    if (isAdmin) {
+      if (targetUser.role === 'admin' || targetUser.role === 'admin-master') {
+        throw new ForbiddenException('Apenas o Admin Master pode deletar administradores.');
+      }
+      await this.usersService.remove(id);
+      return { message: 'Usuário excluído com sucesso' };
+    }
+
+    // Usuário comum não pode deletar ninguém
+    throw new ForbiddenException('Você não tem permissão para deletar usuários.');
   }
 
   @UseGuards(JwtAuthGuard)
-  @Put(':id')
+  @Patch(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Atualizar usuário por ID' })
   @ApiParam({ name: 'id', type: String })
@@ -128,10 +149,44 @@ export class UsersController {
     @Body() updateData: UpdateUserDto,
     @Req() req
   ) {
-    const user = req.user;
-    if (user.userId !== id && user.role !== 'admin') {
+    const currentUser = req.user;
+    const targetUser = await this.usersService.findById(id);
+    const isAdminMaster = currentUser.role === 'admin-master';
+    const isAdmin = currentUser.role === 'admin';
+    const isSelf = currentUser.userId === id;
+
+    if (isAdminMaster) {
+      const updatedUser = await this.usersService.update(id, updateData);
+      return {
+        id: updatedUser._id.toString(),
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt
+      };
+    }
+
+    if (isAdmin) {
+      if (targetUser.role === 'admin-master') {
+        throw new ForbiddenException('Apenas o Admin Master pode editar outro Admin Master.');
+      }
+      if (targetUser.role === 'admin' && !isSelf) {
+        throw new ForbiddenException('Você não pode editar outro administrador.');
+      }
+      if (updateData.role && updateData.role !== 'user') {
+        throw new ForbiddenException('Você não pode alterar o tipo de usuário para admin ou admin-master.');
+      }
+    }
+
+    if (!isAdmin && !isAdminMaster && !isSelf) {
       throw new ForbiddenException('Você não tem permissão para atualizar este usuário.');
     }
+
+    if (!isAdmin && !isAdminMaster && updateData.role) {
+      throw new ForbiddenException('Você não pode alterar o tipo de usuário.');
+    }
+
     const updatedUser = await this.usersService.update(id, updateData);
     return {
       id: updatedUser._id.toString(),
