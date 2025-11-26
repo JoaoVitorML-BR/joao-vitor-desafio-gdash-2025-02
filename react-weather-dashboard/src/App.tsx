@@ -28,7 +28,7 @@ function App() {
             path="/users"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={['admin', 'admin-master']}>
                   <UsersPage />
                 </RoleProtectedRoute>
               </ProtectedRoute>
@@ -38,7 +38,7 @@ function App() {
             path="/users/create"
             element={
               <ProtectedRoute>
-                <RoleProtectedRoute allowedRoles={['admin']}>
+                <RoleProtectedRoute allowedRoles={['admin', 'admin-master']}>
                   <CreateUserPage />
                 </RoleProtectedRoute>
               </ProtectedRoute>
