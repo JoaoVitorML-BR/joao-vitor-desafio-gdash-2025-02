@@ -29,6 +29,11 @@ export const userService = {
                 name,
                 email,
                 password
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
             });
 
             return response.data;
@@ -36,6 +41,35 @@ export const userService = {
             if (error instanceof AxiosError && error.response) {
                 throw {
                     message: error.response.data?.message || 'Erro ao criar usuario',
+                    statusCode: error.response.status,
+                    error: error.response.data?.error,
+                } as ApiErrorResponse;
+            }
+            throw {
+                message: 'Erro de conexão com o servidor',
+                statusCode: 0,
+            } as ApiErrorResponse;
+        }
+    },
+
+    createAdmin: async (name: string, email: string, password: string) => {
+        try {
+            const response = await appClient.post(`${API_VERSION}/auth/register-admin`, {
+                name,
+                email,
+                password
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                },
+            });
+
+            return response.data;
+        } catch (error) {
+            if (error instanceof AxiosError && error.response) {
+                throw {
+                    message: error.response.data?.message || 'Erro ao criar administrador',
                     statusCode: error.response.status,
                     error: error.response.data?.error,
                 } as ApiErrorResponse;
