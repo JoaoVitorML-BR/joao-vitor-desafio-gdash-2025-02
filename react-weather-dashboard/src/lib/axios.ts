@@ -25,7 +25,6 @@ apiClient.interceptors.request.use(
 
                 config.headers.Authorization = `Bearer ${token}`;
             } catch (error) {
-                console.error('Erro ao decodificar token:', error);
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
                 window.location.href = '/login';
