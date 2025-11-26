@@ -7,11 +7,14 @@ import { toast } from 'sonner';
 import { userService } from '@/services/user.service';
 import type { ApiErrorResponse, User } from '@/types/api.types';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import UserDetailsDialog from '../components/UserDetailsDialog';
 
 export default function UsersPage() {
     const navigate = useNavigate();
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -30,6 +33,20 @@ export default function UsersPage() {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleUserClick = (user: User) => {
+        setSelectedUser(user);
+        setIsDialogOpen(true);
+    };
+
+    const handleDialogClose = () => {
+        setIsDialogOpen(false);
+        setTimeout(() => setSelectedUser(null), 300); // Delay to allow dialog animation
+    };
+
+    const handleUserUpdated = () => {
+        loadUsers(); // Reload users list after update/delete
     };
 
     return (
@@ -87,7 +104,8 @@ export default function UsersPage() {
                             {users.map((user) => (
                                 <Card
                                     key={user.id}
-                                    className="hover:shadow-lg transition-shadow duration-200"
+                                    className="hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                                    onClick={() => handleUserClick(user)}
                                 >
                                     <CardHeader>
                                         <div className="flex items-start justify-between">
@@ -100,12 +118,18 @@ export default function UsersPage() {
                                                 </CardDescription>
                                             </div>
                                             <span
-                                                className={`px-2 py-1 text-xs font-medium rounded-full ${user.role === 'admin'
-                                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                                className={`px-2 py-1 text-xs font-medium rounded-full ${user.role === 'admin-master'
+                                                        ? 'bg-linear-to-r from-purple-600 to-pink-600 text-white dark:from-purple-700 dark:to-pink-700'
+                                                        : user.role === 'admin'
+                                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                                                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                                     }`}
                                             >
-                                                {user.role === 'admin' ? 'Admin' : 'Usuário'}
+                                                {user.role === 'admin-master'
+                                                    ? 'Master'
+                                                    : user.role === 'admin'
+                                                        ? 'Admin'
+                                                        : 'Usuário'}
                                             </span>
                                         </div>
                                     </CardHeader>
@@ -125,6 +149,14 @@ export default function UsersPage() {
                     )}
                 </div>
             </div>
+
+            {/* User Details Dialog */}
+            <UserDetailsDialog
+                user={selectedUser}
+                open={isDialogOpen}
+                onOpenChange={handleDialogClose}
+                onUserUpdated={handleUserUpdated}
+            />
         </DashboardLayout>
     );
 }
