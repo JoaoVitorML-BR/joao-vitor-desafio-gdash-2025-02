@@ -2,6 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { WeatherDashboard } from '@/features/weather/components/WeatherDashboard';
 
 export default function HomePage() {
     const { user, logout } = useAuth();
@@ -32,9 +33,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <p className="text-gray-600 dark:text-gray-300">
-                            Sistema de monitoramento climático em desenvolvimento...
-                        </p>
+                        <WeatherDashboard />
                     </div>
                 </div>
             </div>
