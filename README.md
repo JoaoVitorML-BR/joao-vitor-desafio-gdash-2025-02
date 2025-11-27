@@ -9,11 +9,16 @@ Real-time weather monitoring system with microservices architecture. Collects cl
 git clone https://github.com/JoaoVitorML-BR/joao-vitor-desafio-gdash-2025-02.git
 cd joao-vitor-desafio-gdash-2025-02
 
-# Windows
+# Windows (starts Docker services + React frontend)
 start-all.bat
 
-# Linux/Mac
+# Linux/Mac (Docker services only)
 docker-compose up -d --build
+
+# Linux/Mac: In a separate terminal, start React frontend
+cd react-weather-dashboard
+npm install  # Only needed first time
+npm run dev
 ```
 
 ### 2. Wait for Services (~30s)
@@ -58,6 +63,7 @@ After that, use this user to login and create other admins or regular users.
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
+| **React Dashboard** | http://localhost:5173 | - |
 | **Swagger API Docs** | http://localhost:9090/api | - |
 | **NestJS API** | http://localhost:9090 | - |
 | **RabbitMQ UI** | http://localhost:15672 | `guest:guest` |
