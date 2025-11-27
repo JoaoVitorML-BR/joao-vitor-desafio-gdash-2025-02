@@ -63,3 +63,33 @@ export class PaginatedWeatherResponseDto {
     @ApiProperty()
     totalPages: number;
 }
+
+export interface PaginatedResult<T> {
+    data: T[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
+}
+
+export interface WeatherInsights {
+    summary: {
+        avgTemperature: number;
+        minTemperature: number;
+        maxTemperature: number;
+        avgHumidity: number;
+        totalRecords: number;
+        dateRange: {
+            from: string;
+            to: string;
+        };
+    };
+    trends: {
+        temperatureTrend: string;
+        temperatureChange: number;
+    };
+    classification: string;
+    alerts: string[];
+}
