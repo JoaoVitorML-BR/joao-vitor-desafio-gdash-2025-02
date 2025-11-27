@@ -55,3 +55,27 @@ export interface WeatherLog {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface WeatherInsights {
+    summary: {
+        avgTemperature: number;
+        minTemperature: number;
+        maxTemperature: number;
+        avgHumidity: number;
+        totalRecords: number;
+        dateRange: {
+            from: string;
+            to: string;
+        };
+    };
+    trends: {
+        temperatureTrend: 'increasing' | 'decreasing' | 'stable';
+        temperatureChange: number;
+    };
+    classification: string;
+    alerts: string[];
+    aiInsights?: {
+        trends: string[];
+        recommendations: string[];
+    };
+}

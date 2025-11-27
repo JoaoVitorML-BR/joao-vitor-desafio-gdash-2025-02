@@ -1,12 +1,13 @@
 import { API_VERSION } from '@/lib/constants';
 import axios from '../lib/axios';
-import type { 
-    WeatherLog, 
-    WeatherFilters, 
-    PaginatedWeatherResponse 
+import type {
+    WeatherLog,
+    WeatherFilters,
+    PaginatedWeatherResponse
 } from '../features/weather/types/weather.types';
+import type { WeatherInsights } from '../types/api.types';
 
-export type { WeatherLog, WeatherFilters };
+export type { WeatherLog, WeatherFilters, WeatherInsights };
 
 export const weatherService = {
     async getLogsFiltered(params: WeatherFilters = {}): Promise<PaginatedWeatherResponse> {
@@ -27,6 +28,16 @@ export const weatherService = {
 
     async getAllLogs(): Promise<WeatherLog[]> {
         const response = await axios.get<WeatherLog[]>(`${API_VERSION}/weather/logs`);
+        return response.data;
+    },
+
+    async getInsights(params: { startDate?: string; endDate?: string } = {}): Promise<WeatherInsights> {
+        const response = await axios.get<WeatherInsights>(`${API_VERSION}/weather/insights`, {
+            params: {
+                ...(params.startDate && { startDate: params.startDate }),
+                ...(params.endDate && { endDate: params.endDate }),
+            },
+        });
         return response.data;
     },
 

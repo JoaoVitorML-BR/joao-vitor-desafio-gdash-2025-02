@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { useWeatherData } from '../hooks/useWeatherData';
 import { WeatherFilters } from './WeatherFilters';
+import { AIInsightsCard } from '../../../components/weather/AIInsightsCard';
 import type { WeatherFilters as WeatherFiltersType } from '../types/weather.types';
 import { WEATHER_CONSTANTS } from '../constants/weather.constants';
 import { hasActiveFilters, formatDateTimeBR } from '../utils/weather.utils';
@@ -35,7 +36,7 @@ export function WeatherDashboard() {
         refetch();
     };
 
-    const hasFilters = hasActiveFilters(filters);    if (loading) {
+    const hasFilters = hasActiveFilters(filters); if (loading) {
         return (
             <Card className="p-8">
                 <div className="flex items-center justify-center">
@@ -145,6 +146,9 @@ export function WeatherDashboard() {
                     </div>
                 </Card>
             </div>
+
+            {/* AI Insights Card */}
+            <AIInsightsCard startDate={filters.startDate} endDate={filters.endDate} />
 
             {/* Tabela simples com últimos registros */}
             <Card className="p-6">
