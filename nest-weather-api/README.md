@@ -308,34 +308,6 @@ curl -X GET "http://localhost:9090/api/v1/weather/insights?startDate=2025-11-24&
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-### Response Structure
-
-```typescript
-interface WeatherInsights {
-  summary: {
-    avgTemperature: number;      // Average temperature (°C)
-    minTemperature: number;      // Minimum temperature (°C)
-    maxTemperature: number;      // Maximum temperature (°C)
-    avgHumidity: number;         // Average humidity (%)
-    totalRecords: number;        // Number of data points
-    dateRange: {
-      from: string;              // ISO 8601 start date
-      to: string;                // ISO 8601 end date
-    };
-  };
-  trends: {
-    temperatureTrend: 'increasing' | 'decreasing' | 'stable';
-    temperatureChange: number;   // Temperature variation (°C)
-  };
-  classification: string;        // AI-generated summary (2-3 sentences)
-  alerts: string[];              // Important warnings
-  aiInsights?: {
-    trends: string[];            // Observed patterns
-    recommendations: string[];   // Actionable advice
-  };
-}
-```
-
 ### Fallback Behavior
 
 If `OPENROUTER_API_KEY` is not configured:
@@ -368,137 +340,6 @@ POST https://openrouter.ai/api/v1/chat/completions
 5. Return structured insights
 ```
 
-## 📊 Data Models
-
-### User Schema
-```typescript
-{
-  username: string;      // Unique, required
-  email: string;         // Unique, required, validated
-  password: string;      // Hashed with bcrypt
-  role: "user" | "admin"; // Default: "user"
-  createdAt: Date;       // Auto-generated
-  updatedAt: Date;       // Auto-updated
-}
-```
-
-### Weather Log Schema
-```typescript
-{
-  externalId: string;    // From Go Worker (id field)
-  fetchedAt: Date;       // Timestamp of data collection
-  latitude: number;      // -90 to 90
-  longitude: number;     // -180 to 180
-  temperature: number;   // °C
-  humidity: number;      // % (0-100)
-  precipitationProbability: number; // % (0-100)
-  createdAt: Date;       // Auto-generated
-  updatedAt: Date;       // Auto-updated
-}
-
-// Composite index: { fetchedAt: -1, latitude: 1, longitude: 1 }
-```
-
-## 🔐 Authentication & Authorization
-
-### JWT Strategy
-- **Algorithm**: HS256
-- **Expiration**: Configurable (default: 1h)
-- **Payload**: `{ sub: userId, username, role }`
-
-### Guards
-
-#### `JwtAuthGuard`
-Validates JWT token presence and validity.
-
-```typescript
-@UseGuards(JwtAuthGuard)
-@Get('profile')
-getProfile(@Request() req) {
-  return req.user; // { userId, username, role }
-}
-```
-
-#### `AdminGuard`
-Ensures user has admin role.
-
-```typescript
-@UseGuards(JwtAuthGuard, AdminGuard)
-@Delete(':id')
-deleteUser(@Param('id') id: string) {
-  return this.usersService.remove(id);
-}
-```
-
-#### `LocalAuthGuard`
-Validates username/password for login.
-
-```typescript
-@UseGuards(LocalAuthGuard)
-@Post('login')
-login(@Request() req) {
-  return this.authService.login(req.user);
-}
-```
-
-## 📝 DTOs & Validation
-
-### Create Weather Log DTO
-```typescript
-class CreateWeatherLogDto {
-  @IsString()
-  @IsNotEmpty()
-  id: string;
-
-  @IsISO8601()
-  fetched_at: string;
-
-  @IsNumber()
-  @Min(-90)
-  @Max(90)
-  latitude: number;
-
-  @IsNumber()
-  @Min(-180)
-  @Max(180)
-  longitude: number;
-
-  @IsNumber()
-  temperature: number;
-
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  humidity: number;
-
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  precipitation_probability: number;
-}
-```
-
-### Create User DTO
-```typescript
-class CreateUserDto {
-  @IsString()
-  @MinLength(3)
-  @MaxLength(30)
-  username: string;
-
-  @IsEmail()
-  email: string;
-
-  @IsString()
-  @MinLength(6)
-  password: string;
-
-  @IsOptional()
-  @IsEnum(['user', 'admin'])
-  role?: string;
-}
-```
-
 ## 🌐 Swagger Documentation
 
 ### Access
@@ -509,20 +350,6 @@ http://localhost:9090/api
 - **Authentication**: JWT bearer token support
 - **Schemas**: Request/response examples
 - **Try it out**: Execute real API calls
-
-### Configuration
-```typescript
-// main.ts
-const config = new DocumentBuilder()
-  .setTitle('Weather Monitoring API')
-  .setDescription('Real-time weather data collection and management')
-  .setVersion('1.0')
-  .addTag('auth', 'Authentication endpoints')
-  .addTag('users', 'User management')
-  .addTag('weather', 'Weather logs')
-  .addBearerAuth()
-  .build();
-```
 
 ## 🐛 Troubleshooting
 
@@ -552,17 +379,6 @@ curl -X POST http://localhost:9090/api/auth/login \
 # Decode token (jwt.io)
 ```
 
-### Validation errors
-```bash
-# Check DTO definitions match request body
-# Enable validation pipe globally in main.ts:
-app.useGlobalPipes(new ValidationPipe({
-  whitelist: true,
-  forbidNonWhitelisted: true,
-  transform: true,
-}));
-```
-
 ## 🧪 Testing
 
 ```bash
@@ -571,31 +387,6 @@ npm run test
 
 # Test coverage
 npm run test:cov
-```
-
-### Example E2E Test
-```typescript
-describe('Weather Logs (e2e)', () => {
-  let authToken: string;
-
-  beforeAll(async () => {
-    // Login and get token
-    const response = await request(app.getHttpServer())
-      .post('/api/auth/login')
-      .send({ username: 'admin', password: 'senha123' });
-    authToken = response.body.access_token;
-  });
-
-  it('/api/weather/logs (GET) - should return weather logs', () => {
-    return request(app.getHttpServer())
-      .get('/api/weather/logs')
-      .set('Authorization', `Bearer ${authToken}`)
-      .expect(200)
-      .expect((res) => {
-        expect(Array.isArray(res.body)).toBe(true);
-      });
-  });
-});
 ```
 
 ## 📈 Performance
