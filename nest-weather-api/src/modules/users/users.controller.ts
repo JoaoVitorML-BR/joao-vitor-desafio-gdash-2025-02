@@ -26,8 +26,34 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos os usuários' })
-  @ApiResponse({ status: 200, description: 'Lista de usuários.' })
+  @ApiOperation({
+    summary: 'Listar todos os usuários',
+    description: 'Retorna a lista completa de usuários cadastrados no sistema.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de usuários retornada com sucesso.',
+    schema: {
+      example: [
+        {
+          id: '507f1f77bcf86cd799439011',
+          name: 'Gadash Desafio',
+          email: 'gadash@admin.com',
+          role: 'admin',
+          createdAt: '2025-11-27T10:30:00.000Z',
+          updatedAt: '2025-11-27T10:30:00.000Z',
+        },
+        {
+          id: '507f1f77bcf86cd799439012',
+          name: 'João Silva',
+          email: 'joao@example.com',
+          role: 'user',
+          createdAt: '2025-11-27T11:00:00.000Z',
+          updatedAt: '2025-11-27T11:00:00.000Z',
+        },
+      ],
+    },
+  })
   async findAll() {
     const users = await this.usersService.findAll();
     return users.map(user => ({
@@ -43,10 +69,32 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Buscar usuário por ID' })
-  @ApiParam({ name: 'id', type: String })
-  @ApiResponse({ status: 200, description: 'Usuário encontrado.' })
+  @ApiOperation({
+    summary: 'Buscar usuário por ID',
+    description: 'Requer autenticação. Usuários comuns só podem buscar seus próprios dados. Admins podem buscar qualquer usuário.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'ID do usuário (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Usuário encontrado com sucesso.',
+    schema: {
+      example: {
+        id: '507f1f77bcf86cd799439011',
+        name: 'Gadash Desafio',
+        email: 'gadash@admin.com',
+        role: 'admin',
+        createdAt: '2025-11-27T10:30:00.000Z',
+        updatedAt: '2025-11-27T10:30:00.000Z',
+      },
+    },
+  })
   @ApiResponse({ status: 403, description: 'Sem permissão para acessar este usuário.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
   async findOne(@Param('id') id: string, @Req() req) {
     const isAuth = req.user;
     if (!isAuth || (isAuth.userId !== id && isAuth.role !== 'admin')) {
@@ -101,10 +149,27 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Deletar usuário por ID' })
-  @ApiParam({ name: 'id', type: String })
-  @ApiResponse({ status: 200, description: 'Usuário excluído com sucesso.' })
+  @ApiOperation({
+    summary: 'Deletar usuário por ID',
+    description: 'Requer autenticação de admin. Admin Master pode deletar qualquer um. Admin comum só pode deletar usuários comuns. Ninguém pode deletar a si mesmo.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'ID do usuário a ser deletado',
+    example: '507f1f77bcf86cd799439012',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Usuário excluído com sucesso.',
+    schema: {
+      example: {
+        message: 'Usuário excluído com sucesso',
+      },
+    },
+  })
   @ApiResponse({ status: 403, description: 'Sem permissão para deletar este usuário.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
   async deleteUser(@Param('id') id: string, @Req() req) {
     const currentUser = req.user;
     const targetUser = await this.usersService.findById(id);
@@ -112,18 +177,15 @@ export class UsersController {
     const isAdmin = currentUser.role === 'admin';
     const isSelf = currentUser.userId === id;
 
-    // Não pode deletar a si mesmo
     if (isSelf) {
       throw new ForbiddenException('Você não pode deletar sua própria conta.');
     }
 
-    // Admin-master pode deletar qualquer um (exceto ele mesmo)
     if (isAdminMaster) {
       await this.usersService.remove(id);
       return { message: 'Usuário excluído com sucesso' };
     }
 
-    // Admin pode deletar apenas usuários comuns
     if (isAdmin) {
       if (targetUser.role === 'admin' || targetUser.role === 'admin-master') {
         throw new ForbiddenException('Apenas o Admin Master pode deletar administradores.');
@@ -132,18 +194,61 @@ export class UsersController {
       return { message: 'Usuário excluído com sucesso' };
     }
 
-    // Usuário comum não pode deletar ninguém
     throw new ForbiddenException('Você não tem permissão para deletar usuários.');
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: 'Atualizar usuário por ID' })
-  @ApiParam({ name: 'id', type: String })
-  @ApiBody({ type: UpdateUserDto })
-  @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso.' })
+  @ApiOperation({
+    summary: 'Atualizar usuário por ID',
+    description: 'Requer autenticação. Usuários podem atualizar seus próprios dados (exceto role). Admins têm mais permissões.',
+  })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'ID do usuário a ser atualizado',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiBody({
+    type: UpdateUserDto,
+    examples: {
+      updateName: {
+        summary: 'Atualizar nome',
+        value: {
+          name: 'João Vitor Silva',
+        },
+      },
+      updateEmail: {
+        summary: 'Atualizar email',
+        value: {
+          email: 'joaovitor@example.com',
+        },
+      },
+      updatePassword: {
+        summary: 'Atualizar senha',
+        value: {
+          password: 'NovaSenha123!',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Usuário atualizado com sucesso.',
+    schema: {
+      example: {
+        id: '507f1f77bcf86cd799439011',
+        name: 'João Vitor Silva',
+        email: 'joaovitor@example.com',
+        role: 'user',
+        createdAt: '2025-11-27T10:30:00.000Z',
+        updatedAt: '2025-11-27T15:45:00.000Z',
+      },
+    },
+  })
   @ApiResponse({ status: 403, description: 'Sem permissão para atualizar este usuário.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
   async updateUser(
     @Param('id') id: string,
     @Body() updateData: UpdateUserDto,
