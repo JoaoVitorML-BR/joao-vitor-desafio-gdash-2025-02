@@ -1,4 +1,4 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import type { Response } from 'express';
@@ -7,12 +7,17 @@ import { WeatherLog, WeatherLogDocument } from './schemas/weather-log.schema';
 import { CreateWeatherLogDto } from './dto/create-weather-log.dto';
 import { WeatherQueryDto } from './dto/weather-query.dto';
 import { PaginatedResult, WeatherInsights } from './dto/weather-response.dto';
+import { OpenRouterService } from '../../common/service/openrouter.service';
+import { OpenRouterMessage } from '../../common/interfaces/openrouter.interface';
 
 @Injectable()
 export class WeatherService {
+    private readonly logger = new Logger(WeatherService.name);
+
     constructor(
         @InjectModel(WeatherLog.name)
         private weatherLogModel: Model<WeatherLogDocument>,
+        private readonly openRouterService: OpenRouterService,
     ) { }
 
     async create(dto: CreateWeatherLogDto): Promise<WeatherLog> {
@@ -108,25 +113,204 @@ export class WeatherService {
     }
 
     async getInsights(query: WeatherQueryDto): Promise<WeatherInsights> {
-        // TODO: Implementar com OpenRouter para gerar insights via IA
-        // Por enquanto, retorna estrutura vazia
+        const filter: any = {};
 
-        return {
-            summary: {
-                avgTemperature: 0,
-                minTemperature: 0,
-                maxTemperature: 0,
-                avgHumidity: 0,
-                totalRecords: 0,
-                dateRange: { from: '', to: '' },
+        if (query.startDate || query.endDate) {
+            filter.fetchedAt = {};
+            if (query.startDate) {
+                filter.fetchedAt.$gte = new Date(query.startDate);
+            }
+            if (query.endDate) {
+                filter.fetchedAt.$lte = new Date(query.endDate);
+            }
+        }
+
+        const logs = await this.weatherLogModel.find(filter).sort({ fetchedAt: -1 }).exec();
+
+        if (logs.length === 0) {
+            return {
+                summary: {
+                    avgTemperature: 0,
+                    minTemperature: 0,
+                    maxTemperature: 0,
+                    avgHumidity: 0,
+                    totalRecords: 0,
+                    dateRange: { from: '', to: '' },
+                },
+                trends: {
+                    temperatureTrend: 'stable',
+                    temperatureChange: 0,
+                },
+                classification: 'Nenhum dado disponível para análise',
+                alerts: [],
+            };
+        }
+
+        // Calculate statistics efficiently
+        const stats = logs.reduce(
+            (acc, log) => {
+                if (log.temperature != null) {
+                    acc.temps.push(log.temperature);
+                    acc.tempSum += log.temperature;
+                }
+                if (log.humidity != null) {
+                    acc.humidities.push(log.humidity);
+                    acc.humiditySum += log.humidity;
+                }
+                if (log.precipitationProbability != null) {
+                    acc.precipSum += log.precipitationProbability;
+                    acc.precipCount++;
+                }
+                return acc;
             },
-            trends: {
-                temperatureTrend: 'stable',
-                temperatureChange: 0,
+            {
+                temps: [] as number[],
+                tempSum: 0,
+                humidities: [] as number[],
+                humiditySum: 0,
+                precipSum: 0,
+                precipCount: 0,
             },
-            classification: 'Aguardando implementação com OpenRouter',
-            alerts: [],
+        );
+
+        const avgTemp = stats.tempSum / stats.temps.length;
+        const minTemp = Math.min(...stats.temps);
+        const maxTemp = Math.max(...stats.temps);
+        const avgHumidity = stats.humiditySum / stats.humidities.length;
+        const avgPrecipitation = stats.precipSum / stats.precipCount;
+
+        const dateRange = {
+            start: logs[logs.length - 1].fetchedAt,
+            end: logs[0].fetchedAt,
         };
+
+        // Build prompt for AI
+        const systemPrompt = `Você é um assistente especializado em análise meteorológica para empresas de energia solar. 
+Analise os dados climáticos fornecidos e gere insights relevantes em português brasileiro.
+Seja conciso, objetivo e forneça recomendações práticas focadas em produção de energia solar.`;
+
+        const userPrompt = `Analise os seguintes dados meteorológicos de Alagoas, Brasil:
+
+        📊 **Período**: ${new Date(dateRange.start).toLocaleDateString('pt-BR')} a ${new Date(dateRange.end).toLocaleDateString('pt-BR')}
+        📝 **Total de registros**: ${logs.length}
+
+        🌡️ **Temperatura**:
+        - Média: ${avgTemp.toFixed(1)}°C
+        - Mínima: ${minTemp.toFixed(1)}°C
+        - Máxima: ${maxTemp.toFixed(1)}°C
+
+        💧 **Umidade**:
+        - Média: ${avgHumidity.toFixed(1)}%
+
+        🌧️ **Precipitação**:
+        - Probabilidade média: ${avgPrecipitation.toFixed(1)}%
+
+        Por favor, forneça:
+        1. Análise geral do clima no período (2-3 frases)
+        2. Tendências observadas (lista de 2-3 itens)
+        3. Recomendações práticas para otimização de painéis solares (lista de 2-3 itens)
+        4. Alertas importantes, se houver (lista)
+
+        Responda SOMENTE com um JSON válido (sem markdown, sem \`\`\`json) neste formato:
+        {
+        "summary": "resumo geral em 2-3 frases",
+        "trends": ["tendência 1", "tendência 2"],
+        "recommendations": ["recomendação 1", "recomendação 2"],
+        "alerts": ["alerta importante caso necessário"]
+        }`;
+
+        try {
+            const messages: OpenRouterMessage[] = [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+            ];
+
+            this.logger.debug('Requesting AI insights from OpenRouter...');
+            const aiResponse = await this.openRouterService.generateCompletion(
+                messages,
+                'x-ai/grok-4.1-fast:free',
+                {
+                    temperature: 0.5,
+                    max_tokens: 800,
+                },
+            );
+
+            this.logger.debug(`AI response received: ${aiResponse.substring(0, 100)}...`);
+
+            // Parse JSON response
+            const cleanResponse = aiResponse.trim().replace(/```json\n?|\n?```/g, '');
+            const aiInsights = JSON.parse(cleanResponse);
+
+            return {
+                summary: {
+                    avgTemperature: parseFloat(avgTemp.toFixed(1)),
+                    minTemperature: parseFloat(minTemp.toFixed(1)),
+                    maxTemperature: parseFloat(maxTemp.toFixed(1)),
+                    avgHumidity: parseFloat(avgHumidity.toFixed(1)),
+                    totalRecords: logs.length,
+                    dateRange: {
+                        from: new Date(dateRange.start).toISOString(),
+                        to: new Date(dateRange.end).toISOString(),
+                    },
+                },
+                trends: {
+                    temperatureTrend: this.calculateTemperatureTrend(logs),
+                    temperatureChange: parseFloat((maxTemp - minTemp).toFixed(1)),
+                },
+                classification: aiInsights.summary || 'Análise não disponível',
+                alerts: aiInsights.alerts || [],
+                aiInsights: {
+                    trends: aiInsights.trends || [],
+                    recommendations: aiInsights.recommendations || [],
+                },
+            };
+        } catch (error) {
+            this.logger.error('Error generating AI insights', error);
+
+            // Fallback sem IA
+            return {
+                summary: {
+                    avgTemperature: parseFloat(avgTemp.toFixed(1)),
+                    minTemperature: parseFloat(minTemp.toFixed(1)),
+                    maxTemperature: parseFloat(maxTemp.toFixed(1)),
+                    avgHumidity: parseFloat(avgHumidity.toFixed(1)),
+                    totalRecords: logs.length,
+                    dateRange: {
+                        from: new Date(dateRange.start).toISOString(),
+                        to: new Date(dateRange.end).toISOString(),
+                    },
+                },
+                trends: {
+                    temperatureTrend: this.calculateTemperatureTrend(logs),
+                    temperatureChange: parseFloat((maxTemp - minTemp).toFixed(1)),
+                },
+                classification:
+                    'Basic analysis available. Configure OPENROUTER_API_KEY for advanced AI insights.',
+                alerts: [],
+            };
+        }
+    }
+
+    private calculateTemperatureTrend(
+        logs: WeatherLog[],
+    ): 'increasing' | 'decreasing' | 'stable' {
+        if (logs.length < 2) return 'stable';
+
+        const firstHalf = logs.slice(0, Math.floor(logs.length / 2));
+        const secondHalf = logs.slice(Math.floor(logs.length / 2));
+
+        const avgFirstHalf =
+            firstHalf.reduce((sum, log) => sum + (log.temperature || 0), 0) /
+            firstHalf.length;
+        const avgSecondHalf =
+            secondHalf.reduce((sum, log) => sum + (log.temperature || 0), 0) /
+            secondHalf.length;
+
+        const diff = avgSecondHalf - avgFirstHalf;
+
+        if (diff > 1) return 'increasing';
+        if (diff < -1) return 'decreasing';
+        return 'stable';
     }
 
     async exportToCsv(query: WeatherQueryDto, res: Response): Promise<void> {
