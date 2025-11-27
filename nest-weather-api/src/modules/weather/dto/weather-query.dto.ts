@@ -13,17 +13,33 @@ export class WeatherQueryDto {
     @IsDateString()
     endDate?: string;
 
-    @ApiPropertyOptional({ description: 'Latitude para filtro', example: -23.5505 })
+    @ApiPropertyOptional({ description: 'Temperatura mínima (°C)' })
     @IsOptional()
-    @IsNumber()
     @Type(() => Number)
-    latitude?: number;
+    @IsNumber()
+    minTemp?: number;
 
-    @ApiPropertyOptional({ description: 'Longitude para filtro', example: -46.6333 })
+    @ApiPropertyOptional({ description: 'Temperatura máxima (°C)' })
     @IsOptional()
-    @IsNumber()
     @Type(() => Number)
-    longitude?: number;
+    @IsNumber()
+    maxTemp?: number;
+
+    @ApiPropertyOptional({ description: 'Umidade mínima (%)' })
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    @Min(0)
+    @Max(100)
+    minHumidity?: number;
+
+    @ApiPropertyOptional({ description: 'Umidade máxima (%)' })
+    @IsOptional()
+    @Type(() => Number)
+    @IsNumber()
+    @Min(0)
+    @Max(100)
+    maxHumidity?: number;
 
     @ApiPropertyOptional({ description: 'Página atual', minimum: 1, default: 1 })
     @IsOptional()
