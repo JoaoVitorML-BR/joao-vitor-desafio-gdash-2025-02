@@ -371,4 +371,16 @@ curl -X POST http://localhost:9090/api/weather/logs \
 
 ---
 
+## 📚 Navegação
+
+| Serviço | Descrição | Link |
+|---------|-----------|------|
+| 📖 **Principal** | Visão geral e setup completo | [README.md](../README.md) |
+| 🟢 **NestJS API** | Backend principal com AI | [nest-weather-api/](../nest-weather-api/README.md) |
+| 🐍 **Python Worker** | Coleta de dados OpenMeteo | [py-openmeteo-api/](../py-openmeteo-api/README.md) |
+| 🔵 **Go Worker** | Processamento em Go | 👉 *Você está aqui* |
+| ⚛️ **React Dashboard** | Frontend web | [react-weather-dashboard/](../react-weather-dashboard/README.md) |
+
+---
+
 [← Back to main README](../README.md)

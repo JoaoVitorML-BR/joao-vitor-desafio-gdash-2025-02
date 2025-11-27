@@ -103,6 +103,20 @@ Connects to NestJS backend at `http://localhost:9090/api/v1`
 - Reusable components
 - Type-safe development
 
+---
+
+## 📚 Navegação
+
+| Serviço | Descrição | Link |
+|---------|-----------|------|
+| 📖 **Principal** | Visão geral e setup completo | [README.md](../README.md) |
+| 🟢 **NestJS API** | Backend principal com AI | [nest-weather-api/](../nest-weather-api/README.md) |
+| 🐍 **Python Worker** | Coleta de dados OpenMeteo | [py-openmeteo-api/](../py-openmeteo-api/README.md) |
+| 🔵 **Go Worker** | Processamento em Go | [go-worker-api/](../go-worker-api/README.md) |
+| ⚛️ **React Dashboard** | Frontend web | 👉 *Você está aqui* |
+
+---
+
 ## License
 
 MIT

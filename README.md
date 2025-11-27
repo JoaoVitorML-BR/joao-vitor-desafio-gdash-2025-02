@@ -151,6 +151,19 @@ cd go-worker-api && docker-compose up
 cd nest-weather-api && docker-compose up
 ```
 
+---
+
+## 📚 Documentação Detalhada por Serviço
+
+| Serviço | Descrição | Documentação |
+|---------|-----------|--------------|
+| 🟢 **NestJS Weather API** | Backend principal com autenticação JWT e AI insights | [📖 README](./nest-weather-api/README.md) |
+| 🐍 **Python OpenMeteo Worker** | Worker de coleta de dados meteorológicos | [📖 README](./py-openmeteo-api/README.md) |
+| 🔵 **Go Worker API** | Processador e transformador de dados | [📖 README](./go-worker-api/README.md) |
+| ⚛️ **React Weather Dashboard** | Interface web do dashboard | [📖 README](./react-weather-dashboard/README.md) |
+
+---
+
 ## 📝 License
 
 Developed for GDASH 2025-02 challenge.

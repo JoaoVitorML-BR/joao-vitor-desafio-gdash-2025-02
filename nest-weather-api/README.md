@@ -633,4 +633,16 @@ describe('Weather Logs (e2e)', () => {
 
 ---
 
+## 📚 Navegação
+
+| Serviço | Descrição | Link |
+|---------|-----------|------|
+| 📖 **Principal** | Visão geral e setup completo | [README.md](../README.md) |
+| 🟢 **NestJS API** | Backend principal com AI | 👉 *Você está aqui* |
+| 🐍 **Python Worker** | Coleta de dados OpenMeteo | [py-openmeteo-api/](../py-openmeteo-api/README.md) |
+| 🔵 **Go Worker** | Processamento em Go | [go-worker-api/](../go-worker-api/README.md) |
+| ⚛️ **React Dashboard** | Frontend web | [react-weather-dashboard/](../react-weather-dashboard/README.md) |
+
+---
+
 [← Back to main README](../README.md)
