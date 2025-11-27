@@ -27,7 +27,11 @@ class RabbitPublisher:
         if not self._channel or self._channel.is_closed:
             self._channel = await self._connection.channel()
             await self._channel.set_qos(prefetch_count=10)
-        if not self._queue or self._queue.closed:
+            self._queue = await self._channel.declare_queue(
+                config.RABBITMQ_QUEUE,
+                durable=True,
+            )
+        elif not self._queue:
             self._queue = await self._channel.declare_queue(
                 config.RABBITMQ_QUEUE,
                 durable=True,

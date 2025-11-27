@@ -1,98 +1,439 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🟢 NestJS Weather API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Modern REST API built with NestJS, providing weather data management, user authentication, and comprehensive API documentation with Swagger.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 Overview
 
-## Description
+This service is responsible for:
+- Receiving and validating weather data from Go Worker
+- Managing user authentication with JWT
+- Storing weather logs in MongoDB
+- Providing REST API for data access
+- Exposing interactive API documentation
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🏗️ Architecture
 
-## Project setup
-
-```bash
-$ npm install
+```
+┌─────────────────┐
+│   Go Worker     │ (HTTP POST /api/weather/logs)
+└────────┬────────┘
+         │ HTTP
+         ▼
+┌─────────────────┐
+│ NestJS API      │
+├─────────────────┤
+│  Controllers    │ ← HTTP Requests
+│  Services       │ ← Business Logic
+│  Schemas        │ ← MongoDB Models
+│  DTOs           │ ← Validation
+│  Guards         │ ← JWT Auth
+└────────┬────────┘
+         │ MongoDB Driver
+         ▼
+┌─────────────────┐
+│   MongoDB       │ (Collections: users, weatherlogs)
+└─────────────────┘
 ```
 
-## Compile and run the project
+### Module Structure
 
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+```
+src/
+├── main.ts                    # Bootstrap
+├── app.module.ts              # Root module
+│
+└── modules/
+    ├── auth/                  # Authentication
+    │   ├── auth.controller.ts
+    │   ├── auth.service.ts
+    │   ├── guards/
+    │   │   ├── jwt-auth.guard.ts
+    │   │   ├── local-auth.guard.ts
+    │   │   └── admin.guard.ts
+    │   ├── strategies/
+    │   │   ├── jwt.strategy.ts
+    │   │   └── local.strategy.ts
+    │   └── dto/
+    │       └── login.dto.ts
+    │
+    ├── users/                 # User management
+    │   ├── users.controller.ts
+    │   ├── users.service.ts
+    │   ├── schemas/
+    │   │   └── user.schema.ts
+    │   └── dto/
+    │       ├── create-user.dto.ts
+    │       ├── update-user.dto.ts
+    │       └── user-response.dto.ts
+    │
+    └── weather/               # Weather logs
+        ├── weather.controller.ts
+        ├── weather.service.ts
+        ├── schemas/
+        │   └── weather-log.schema.ts
+        └── dto/
+            ├── create-weather-log.dto.ts
+            └── update-weather-log.dto.ts
 ```
 
-## Run tests
+## 📦 Technologies
+
+- **NestJS 11**: Modern Node.js framework
+- **TypeScript 5**: Type-safe development
+- **MongoDB 6**: NoSQL database
+- **Mongoose**: ODM for MongoDB
+- **Passport JWT**: Authentication strategy
+- **class-validator**: DTO validation
+- **Swagger/OpenAPI**: API documentation
+- **OpenRouter AI**: AI-powered weather insights with Grok 4.1
+
+## 🚀 Quick Start
+
+### Using Docker (Recommended)
 
 ```bash
-# unit tests
-$ npm run test
+# Individual development
+cd nest-weather-api
+docker-compose up -d
 
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+# View logs
+docker-compose logs -f nest-api
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Local Development
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Install dependencies
+npm install
+
+# Development mode (hot reload)
+npm run start:dev
+
+# Production mode
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🌍 Environment Variables
 
-## Resources
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NODE_ENV` | Environment mode | `development` |
+| `PORT` | Server port | `9090` |
+| `MONGO_URI` | MongoDB connection string | `mongodb://admin:12345@mongodb:27017/weather_data?authSource=admin` |
+| `JWT_SECRET` | Secret for JWT signing | (required) |
+| `API_VERSION` | API version prefix | `v1` |
+| `OPENROUTER_API_KEY` | OpenRouter API key for AI insights | (optional) |
+| `SITE_URL` | Site URL for OpenRouter | `http://localhost:9090` |
+| `SITE_NAME` | Site name for OpenRouter | `GDASH Weather API` |
 
-Check out a few resources that may come in handy when working with NestJS:
+## 📚 API Endpoints
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### 🔓 Public Endpoints
 
-## Support
+#### Authentication
+```bash
+# Register new user
+POST /api/auth/register
+Content-Type: application/json
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "secure123",
+  "role": "user"  # Optional: "user" | "admin"
+}
 
-## Stay in touch
+# Login
+POST /api/auth/login
+Content-Type: application/json
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+{
+  "username": "john_doe",
+  "password": "secure123"
+}
 
-## License
+Response:
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+#### Weather Logs (Write)
+```bash
+# Create weather log (used by Go Worker)
+POST /api/weather/logs
+Content-Type: application/json
+
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "fetched_at": "2025-11-24T10:30:00Z",
+  "latitude": -9.747399554832585,
+  "longitude": -36.666791770043595,
+  "temperature": 28.5,
+  "humidity": 65.2,
+  "precipitation_probability": 15.0
+}
+```
+
+### 🔒 Protected Endpoints (Require JWT)
+
+#### Users
+```bash
+# List all users (admin only)
+GET /api/users
+Authorization: Bearer YOUR_TOKEN
+
+# Get user by ID
+GET /api/users/:id
+Authorization: Bearer YOUR_TOKEN
+
+# Create user (admin only)
+POST /api/users
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "username": "new_user",
+  "email": "user@example.com",
+  "password": "pass123",
+  "role": "user"
+}
+
+# Update user
+PATCH /api/users/:id
+Authorization: Bearer YOUR_TOKEN
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com"
+}
+
+# Delete user (admin only)
+DELETE /api/users/:id
+Authorization: Bearer YOUR_TOKEN
+```
+
+#### Weather Logs (Read)
+```bash
+# List all weather logs
+GET /api/weather/logs
+Authorization: Bearer YOUR_TOKEN
+
+# Query parameters:
+# - page: number (default: 1)
+# - limit: number (default: 10)
+# - sortBy: string (default: "fetchedAt")
+# - order: "asc" | "desc" (default: "desc")
+
+# Get weather log by ID
+GET /api/weather/logs/:id
+Authorization: Bearer YOUR_TOKEN
+
+# Get filtered weather logs with pagination
+GET /api/weather/logs/filtered?startDate=2025-11-24&endDate=2025-11-25&page=1&limit=20
+Authorization: Bearer YOUR_TOKEN
+
+# Get AI-powered weather insights
+GET /api/weather/insights?startDate=2025-11-24&endDate=2025-11-25
+Authorization: Bearer YOUR_TOKEN
+
+Response:
+{
+  "summary": {
+    "avgTemperature": 33.1,
+    "minTemperature": 33,
+    "maxTemperature": 33.3,
+    "avgHumidity": 82,
+    "totalRecords": 54,
+    "dateRange": {
+      "from": "2025-11-24T15:26:06.000Z",
+      "to": "2025-11-24T16:21:57.000Z"
+    }
+  },
+  "trends": {
+    "temperatureTrend": "stable",
+    "temperatureChange": 0.3
+  },
+  "classification": "O período foi marcado por temperaturas elevadas...",
+  "alerts": ["Risco de sobreaquecimento em inversores..."],
+  "aiInsights": {
+    "trends": ["Temperatura excepcionalmente estável..."],
+    "recommendations": ["Maximize a produção inclinando painéis..."]
+  }
+}
+
+# Export to CSV
+GET /api/weather/export/csv?startDate=2025-11-01&endDate=2025-11-30
+Authorization: Bearer YOUR_TOKEN
+
+# Export to Excel
+GET /api/weather/export/xlsx?startDate=2025-11-01&endDate=2025-11-30
+Authorization: Bearer YOUR_TOKEN
+
+# Delete weather log (admin only)
+DELETE /api/weather/logs/:id
+Authorization: Bearer YOUR_TOKEN
+```
+
+## 🤖 AI-Powered Weather Insights
+
+### Overview
+The API integrates with **OpenRouter** (using free **Grok 4.1 Fast** model) to generate intelligent weather analysis focused on solar panel optimization.
+
+### Configuration
+
+1. **Get OpenRouter API Key** (free):
+   - Sign up at [OpenRouter](https://openrouter.ai/)
+   - Navigate to API Keys section
+   - Create a new key
+
+2. **Set environment variable**:
+```bash
+OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxx
+```
+
+### Features
+
+- **Statistical Analysis**: Calculates averages, min/max for temperature, humidity, and precipitation
+- **Trend Detection**: Identifies increasing, decreasing, or stable temperature patterns
+- **Solar Panel Recommendations**: AI generates specific advice for optimizing solar energy production
+- **Risk Alerts**: Identifies potential issues (overheating, corrosion, efficiency loss)
+- **Portuguese Support**: All insights are in Brazilian Portuguese
+
+### API Call Example
+
+```bash
+curl -X GET "http://localhost:9090/api/v1/weather/insights?startDate=2025-11-24&endDate=2025-11-25" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Fallback Behavior
+
+If `OPENROUTER_API_KEY` is not configured:
+- API still returns statistical summary
+- `classification` shows: "Configure OPENROUTER_API_KEY for advanced AI insights"
+- `aiInsights` will be `undefined`
+
+### Cost
+
+- **Free tier**: Using `x-ai/grok-4.1-fast:free` model
+- **No credit card required** for basic usage
+- Check [OpenRouter pricing](https://openrouter.ai/docs#models) for rate limits
+
+### Architecture
+
+```
+WeatherController
+    ↓
+WeatherService.getInsights()
+    ↓
+1. Query MongoDB (filtered by date range)
+2. Calculate statistics
+3. Build AI prompt
+    ↓
+OpenRouterService.generateCompletion()
+    ↓
+POST https://openrouter.ai/api/v1/chat/completions
+    ↓
+4. Parse JSON response
+5. Return structured insights
+```
+
+## 🌐 Swagger Documentation
+
+### Access
+http://localhost:9090/api
+
+### Features
+- **Interactive UI**: Test endpoints directly
+- **Authentication**: JWT bearer token support
+- **Schemas**: Request/response examples
+- **Try it out**: Execute real API calls
+
+## 🐛 Troubleshooting
+
+### Cannot connect to MongoDB
+```bash
+# Check MongoDB is running
+docker ps | grep mongodb
+
+# Test connection
+docker exec -it gdash-mongodb mongosh \
+  -u admin -p 12345 --authenticationDatabase admin
+
+# Check logs
+docker-compose logs mongodb
+```
+
+### JWT validation errors
+```bash
+# Verify JWT_SECRET is set
+echo $JWT_SECRET
+
+# Test token generation
+curl -X POST http://localhost:9090/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"senha123"}'
+
+# Decode token (jwt.io)
+```
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm run test
+
+# Test coverage
+npm run test:cov
+```
+
+## 📈 Performance
+
+### Database Indexes
+- `users`: `username` (unique), `email` (unique)
+- `weatherlogs`: `{ fetchedAt: -1, latitude: 1, longitude: 1 }` (compound)
+
+### Optimization Tips
+- Use pagination for large datasets
+- Enable MongoDB connection pooling
+- Implement caching for frequently accessed data
+- Use projection to return only needed fields
+
+## 🔗 Integration
+
+**Upstream producers:**
+- **Go Worker** (`go-worker-api`) sends weather data via HTTP POST
+
+**Downstream consumers:**
+- **Frontend** (future) will consume REST API
+- **Analytics tools** can query aggregated data
+
+**Infrastructure dependencies:**
+- MongoDB (data persistence)
+- JWT secret (authentication)
+
+## 📖 References
+
+- [NestJS Documentation](https://docs.nestjs.com/)
+- [Passport JWT Strategy](http://www.passportjs.org/packages/passport-jwt/)
+- [Mongoose ODM](https://mongoosejs.com/)
+- [class-validator](https://github.com/typestack/class-validator)
+- [Swagger/OpenAPI](https://swagger.io/specification/)
+
+---
+
+## 📚 Navegação
+
+| Serviço | Descrição | Link |
+|---------|-----------|------|
+| 📖 **Principal** | Visão geral e setup completo | [README.md](../README.md) |
+| 🟢 **NestJS API** | Backend principal com AI | 👉 *Você está aqui* |
+| 🐍 **Python Worker** | Coleta de dados OpenMeteo | [py-openmeteo-api/](../py-openmeteo-api/README.md) |
+| 🔵 **Go Worker** | Processamento em Go | [go-worker-api/](../go-worker-api/README.md) |
+| ⚛️ **React Dashboard** | Frontend web | [react-weather-dashboard/](../react-weather-dashboard/README.md) |
+
+---
+
+[← Back to main README](../README.md)

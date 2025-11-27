@@ -54,7 +54,7 @@ export class AuthService {
     const userData = {
       ...registerDto,
       password: hashedPassword,
-      role: isFirstUser ? UserRole.ADMIN : UserRole.USER,
+      role: isFirstUser ? UserRole.ADMINMASTER : UserRole.USER,
     };
 
     const user = await this.usersService.create(userData);
