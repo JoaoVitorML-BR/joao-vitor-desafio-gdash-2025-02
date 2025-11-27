@@ -92,4 +92,8 @@ export interface WeatherInsights {
     };
     classification: string;
     alerts: string[];
+    aiInsights?: {
+        trends: string[];
+        recommendations: string[];
+    };
 }
