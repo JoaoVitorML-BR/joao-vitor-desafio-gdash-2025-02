@@ -85,6 +85,7 @@ src/
 - **Passport JWT**: Authentication strategy
 - **class-validator**: DTO validation
 - **Swagger/OpenAPI**: API documentation
+- **OpenRouter AI**: AI-powered weather insights with Grok 4.1
 
 ## 🚀 Quick Start
 
@@ -122,6 +123,9 @@ npm run start:prod
 | `MONGO_URI` | MongoDB connection string | `mongodb://admin:12345@mongodb:27017/weather_data?authSource=admin` |
 | `JWT_SECRET` | Secret for JWT signing | (required) |
 | `API_VERSION` | API version prefix | `v1` |
+| `OPENROUTER_API_KEY` | OpenRouter API key for AI insights | (optional) |
+| `SITE_URL` | Site URL for OpenRouter | `http://localhost:9090` |
+| `SITE_NAME` | Site name for OpenRouter | `GDASH Weather API` |
 
 ## 📚 API Endpoints
 
@@ -226,9 +230,142 @@ Authorization: Bearer YOUR_TOKEN
 GET /api/weather/logs/:id
 Authorization: Bearer YOUR_TOKEN
 
+# Get filtered weather logs with pagination
+GET /api/weather/logs/filtered?startDate=2025-11-24&endDate=2025-11-25&page=1&limit=20
+Authorization: Bearer YOUR_TOKEN
+
+# Get AI-powered weather insights
+GET /api/weather/insights?startDate=2025-11-24&endDate=2025-11-25
+Authorization: Bearer YOUR_TOKEN
+
+Response:
+{
+  "summary": {
+    "avgTemperature": 33.1,
+    "minTemperature": 33,
+    "maxTemperature": 33.3,
+    "avgHumidity": 82,
+    "totalRecords": 54,
+    "dateRange": {
+      "from": "2025-11-24T15:26:06.000Z",
+      "to": "2025-11-24T16:21:57.000Z"
+    }
+  },
+  "trends": {
+    "temperatureTrend": "stable",
+    "temperatureChange": 0.3
+  },
+  "classification": "O período foi marcado por temperaturas elevadas...",
+  "alerts": ["Risco de sobreaquecimento em inversores..."],
+  "aiInsights": {
+    "trends": ["Temperatura excepcionalmente estável..."],
+    "recommendations": ["Maximize a produção inclinando painéis..."]
+  }
+}
+
+# Export to CSV
+GET /api/weather/export/csv?startDate=2025-11-01&endDate=2025-11-30
+Authorization: Bearer YOUR_TOKEN
+
+# Export to Excel
+GET /api/weather/export/xlsx?startDate=2025-11-01&endDate=2025-11-30
+Authorization: Bearer YOUR_TOKEN
+
 # Delete weather log (admin only)
 DELETE /api/weather/logs/:id
 Authorization: Bearer YOUR_TOKEN
+```
+
+## 🤖 AI-Powered Weather Insights
+
+### Overview
+The API integrates with **OpenRouter** (using free **Grok 4.1 Fast** model) to generate intelligent weather analysis focused on solar panel optimization.
+
+### Configuration
+
+1. **Get OpenRouter API Key** (free):
+   - Sign up at [OpenRouter](https://openrouter.ai/)
+   - Navigate to API Keys section
+   - Create a new key
+
+2. **Set environment variable**:
+```bash
+OPENROUTER_API_KEY=sk-or-v1-xxxxxxxxxxxxxxxxxxxxx
+```
+
+### Features
+
+- **Statistical Analysis**: Calculates averages, min/max for temperature, humidity, and precipitation
+- **Trend Detection**: Identifies increasing, decreasing, or stable temperature patterns
+- **Solar Panel Recommendations**: AI generates specific advice for optimizing solar energy production
+- **Risk Alerts**: Identifies potential issues (overheating, corrosion, efficiency loss)
+- **Portuguese Support**: All insights are in Brazilian Portuguese
+
+### API Call Example
+
+```bash
+curl -X GET "http://localhost:9090/api/v1/weather/insights?startDate=2025-11-24&endDate=2025-11-25" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Response Structure
+
+```typescript
+interface WeatherInsights {
+  summary: {
+    avgTemperature: number;      // Average temperature (°C)
+    minTemperature: number;      // Minimum temperature (°C)
+    maxTemperature: number;      // Maximum temperature (°C)
+    avgHumidity: number;         // Average humidity (%)
+    totalRecords: number;        // Number of data points
+    dateRange: {
+      from: string;              // ISO 8601 start date
+      to: string;                // ISO 8601 end date
+    };
+  };
+  trends: {
+    temperatureTrend: 'increasing' | 'decreasing' | 'stable';
+    temperatureChange: number;   // Temperature variation (°C)
+  };
+  classification: string;        // AI-generated summary (2-3 sentences)
+  alerts: string[];              // Important warnings
+  aiInsights?: {
+    trends: string[];            // Observed patterns
+    recommendations: string[];   // Actionable advice
+  };
+}
+```
+
+### Fallback Behavior
+
+If `OPENROUTER_API_KEY` is not configured:
+- API still returns statistical summary
+- `classification` shows: "Configure OPENROUTER_API_KEY for advanced AI insights"
+- `aiInsights` will be `undefined`
+
+### Cost
+
+- **Free tier**: Using `x-ai/grok-4.1-fast:free` model
+- **No credit card required** for basic usage
+- Check [OpenRouter pricing](https://openrouter.ai/docs#models) for rate limits
+
+### Architecture
+
+```
+WeatherController
+    ↓
+WeatherService.getInsights()
+    ↓
+1. Query MongoDB (filtered by date range)
+2. Calculate statistics
+3. Build AI prompt
+    ↓
+OpenRouterService.generateCompletion()
+    ↓
+POST https://openrouter.ai/api/v1/chat/completions
+    ↓
+4. Parse JSON response
+5. Return structured insights
 ```
 
 ## 📊 Data Models
@@ -431,9 +568,6 @@ app.useGlobalPipes(new ValidationPipe({
 ```bash
 # Unit tests
 npm run test
-
-# E2E tests
-npm run test:e2e
 
 # Test coverage
 npm run test:cov
