@@ -65,10 +65,7 @@ After that, use this user to login and create other admins or regular users.
 
 ## 📋 Architecture
 
-```
-OpenMeteo API → Python Collector → RabbitMQ → Go Worker → NestJS API → MongoDB
-                 (1 min interval)    (AMQP)   (Transform)   (REST)
-```
+![Architecture Diagram](./fluxo.png)
 
 ### Data Flow
 1. **Python**: Fetches weather data every minute
