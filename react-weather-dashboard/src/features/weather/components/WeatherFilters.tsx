@@ -57,13 +57,21 @@ export function WeatherFilters({ onFilter, onClear }: WeatherFiltersProps) {
                         </span>
                     )}
                 </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsExpanded(!isExpanded)}
-                >
-                    {isExpanded ? 'Ocultar' : 'Mostrar'}
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                    >
+                        {isExpanded ? 'Ocultar' : 'Mostrar'}
+                    </Button>
+                    {hasFilters && (
+                        <Button onClick={handleClearFilter} variant="outline" size="sm">
+                            <X className="mr-2 h-4 w-4" />
+                            Limpar Filtros
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {isExpanded && (
