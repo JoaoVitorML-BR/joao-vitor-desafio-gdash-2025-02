@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { User, UserDocument } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
+import { PaginatedUsers } from 'src/common/interfaces/user.interface';
 
 @Injectable()
 export class UsersService {
@@ -47,8 +48,23 @@ export class UsersService {
     return !!user;
   }
 
-  async findAll(): Promise<UserDocument[]> {
-    return this.userModel.find().exec();
+  async findAll(page?: number, limit?: number): Promise<PaginatedUsers> {
+    const pageOp = arguments[0] !== undefined ? Number(arguments[0]) : 1;
+    const limitOp = arguments[1] !== undefined ? Number(arguments[1]) : 10;
+    const [data, total] = await Promise.all([
+      this.userModel.find()
+        .skip((pageOp - 1) * limitOp)
+        .limit(limitOp)
+        .exec(),
+      this.userModel.countDocuments().exec()
+    ]);
+    return {
+      data,
+      total,
+      page: pageOp,
+      limit: limitOp,
+      totalPages: Math.ceil(total / limitOp),
+    };
   }
 
   async update(id: string, updateUserDto: any): Promise<UserDocument> {

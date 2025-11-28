@@ -4,9 +4,17 @@ import { API_VERSION } from '@/lib/constants';
 import type { ApiErrorResponse, User } from '@/types/api.types';
 
 export const userService = {
-    getAll: async (): Promise<User[]> => {
+    getAll: async (page = 1, limit = 6): Promise<{
+        data: User[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }> => {
         try {
-            const response = await appClient.get(`${API_VERSION}/users`);
+            const response = await appClient.get(`${API_VERSION}/users`, {
+                params: { page, limit }
+            });
             return response.data;
         } catch (error) {
             if (error instanceof AxiosError && error.response) {
