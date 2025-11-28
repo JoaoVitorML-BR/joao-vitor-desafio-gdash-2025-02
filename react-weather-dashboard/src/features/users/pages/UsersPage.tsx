@@ -51,7 +51,7 @@ export default function UsersPage() {
 
     return (
         <DashboardLayout>
-            <div className="p-8">
+            <div className="min-h-screen bg-linear-to-br from-sky-400 via-blue-500 to-indigo-600 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 p-8">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="flex justify-between items-center mb-8">
@@ -60,10 +60,10 @@ export default function UsersPage() {
                                 <Users className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                <h1 className="text-3xl font-bold text-white drop-shadow-lg dark:text-white">
                                     Gerenciar Usuários
                                 </h1>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-white/90 drop-shadow-md dark:text-gray-300">
                                     {users.length} {users.length === 1 ? 'usuário cadastrado' : 'usuários cadastrados'}
                                 </p>
                             </div>
@@ -86,7 +86,7 @@ export default function UsersPage() {
 
                     {/* Lista de Usuários */}
                     {!isLoading && users.length === 0 && (
-                        <Card>
+                        <Card className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20">
                             <CardContent className="py-20 text-center">
                                 <Users className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                                 <p className="text-gray-600 dark:text-gray-300 text-lg">
@@ -104,7 +104,7 @@ export default function UsersPage() {
                             {users.map((user) => (
                                 <Card
                                     key={user.id}
-                                    className="hover:shadow-lg transition-all duration-200 cursor-pointer hover:scale-[1.02]"
+                                    className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border border-white/20 hover:shadow-2xl transition-all duration-200 cursor-pointer hover:scale-[1.02]"
                                     onClick={() => handleUserClick(user)}
                                 >
                                     <CardHeader>
@@ -119,10 +119,10 @@ export default function UsersPage() {
                                             </div>
                                             <span
                                                 className={`px-2 py-1 text-xs font-medium rounded-full ${user.role === 'admin-master'
-                                                        ? 'bg-linear-to-r from-purple-600 to-pink-600 text-white dark:from-purple-700 dark:to-pink-700'
-                                                        : user.role === 'admin'
-                                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                                                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                                    ? 'bg-linear-to-r from-purple-600 to-pink-600 text-white dark:from-purple-700 dark:to-pink-700'
+                                                    : user.role === 'admin'
+                                                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                                                        : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                                     }`}
                                             >
                                                 {user.role === 'admin-master'

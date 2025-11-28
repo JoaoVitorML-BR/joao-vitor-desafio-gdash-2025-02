@@ -74,13 +74,13 @@ export default function CreateUserPage() {
 
     return (
         <DashboardLayout>
-            <div className="p-8">
+            <div className="min-h-screen bg-linear-to-br from-sky-400 via-blue-500 to-indigo-600 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 p-8">
                 <div className="max-w-3xl mx-auto">
                     <div className="mb-8">
                         <Button
                             variant="ghost"
                             onClick={() => navigate('/users')}
-                            className="mb-4 gap-2"
+                            className="mb-4 gap-2 flex-1 bg-linear-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 hover:text-white text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                         >
                             <ArrowLeft className="w-4 h-4" />
                             Voltar
@@ -90,10 +90,10 @@ export default function CreateUserPage() {
                                 <UserPlus className="w-6 h-6 text-white" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                                <h1 className="text-3xl font-bold text-white drop-shadow-lg dark:text-white">
                                     Cadastrar Usuário
                                 </h1>
-                                <p className="text-gray-600 dark:text-gray-300">
+                                <p className="text-white/90 drop-shadow-md dark:text-gray-300">
                                     Preencha os dados para criar um novo usuário
                                 </p>
                             </div>
@@ -101,7 +101,7 @@ export default function CreateUserPage() {
                     </div>
 
                     {/* Form card */}
-                    <Card className="shadow-lg border-gray-200 dark:border-gray-700">
+                    <Card className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20">
                         <CardHeader>
                             <CardTitle>Informações do Usuário</CardTitle>
                             <CardDescription>
@@ -203,7 +203,7 @@ export default function CreateUserPage() {
                                         variant="outline"
                                         onClick={() => navigate('/users')}
                                         disabled={isLoading}
-                                        className="flex-1"
+                                        className="flex-1 hover:bg-red-600 hover:text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                                     >
                                         Cancelar
                                     </Button>
