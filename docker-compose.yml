@@ -84,7 +84,7 @@ services:
     environment:
       - OPENMETEO_LAT=-9.747399554832585
       - OPENMETEO_LON=-36.666791770043595
-      - OPENMETEO_INTERVAL_MINUTES=1
+      - OPENMETEO_INTERVAL_MINUTES=60
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
       - RABBITMQ_QUEUE=weather_logs_queue
     depends_on:
