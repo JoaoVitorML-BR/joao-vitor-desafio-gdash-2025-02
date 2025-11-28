@@ -9,7 +9,7 @@ import { WeatherQueryDto } from './dto/weather-query.dto';
 import { PaginatedResult, WeatherInsights } from './dto/weather-response.dto';
 import { OpenRouterService } from '../../common/service/openrouter.service';
 import { OpenRouterMessage } from '../../common/interfaces/openrouter.interface';
-import { toBrazilTime } from '../../common/utils/date.utils';
+import { toBrazilTime, fromBrazilTimeToUTC } from '../../common/utils/date.utils';
 
 @Injectable()
 export class WeatherService {
@@ -57,14 +57,20 @@ export class WeatherService {
 
     async findWithFilters(query: WeatherQueryDto): Promise<PaginatedResult<WeatherLog>> {
         const filter: any = {};
-
+        
         if (query.startDate || query.endDate) {
             filter.fetchedAt = {};
             if (query.startDate) {
-                filter.fetchedAt.$gte = new Date(query.startDate);
+                const convertedDate = fromBrazilTimeToUTC(query.startDate);
+                this.logger.debug(`[FILTER] startDate input: ${query.startDate}`);
+                this.logger.debug(`[FILTER] startDate converted to UTC: ${convertedDate.toISOString()}`);
+                filter.fetchedAt.$gte = convertedDate;
             }
             if (query.endDate) {
-                filter.fetchedAt.$lte = new Date(query.endDate);
+                const convertedDate = fromBrazilTimeToUTC(query.endDate);
+                this.logger.debug(`[FILTER] endDate input: ${query.endDate}`);
+                this.logger.debug(`[FILTER] endDate converted to UTC: ${convertedDate.toISOString()}`);
+                filter.fetchedAt.$lte = convertedDate;
             }
         }
 
@@ -119,10 +125,10 @@ export class WeatherService {
         if (query.startDate || query.endDate) {
             filter.fetchedAt = {};
             if (query.startDate) {
-                filter.fetchedAt.$gte = new Date(query.startDate);
+                filter.fetchedAt.$gte = fromBrazilTimeToUTC(query.startDate);
             }
             if (query.endDate) {
-                filter.fetchedAt.$lte = new Date(query.endDate);
+                filter.fetchedAt.$lte = fromBrazilTimeToUTC(query.endDate);
             }
         }
 
@@ -320,10 +326,10 @@ Seja conciso, objetivo e forneça recomendações práticas focadas em produçã
         if (query.startDate || query.endDate) {
             filter.fetchedAt = {};
             if (query.startDate) {
-                filter.fetchedAt.$gte = new Date(query.startDate);
+                filter.fetchedAt.$gte = fromBrazilTimeToUTC(query.startDate);
             }
             if (query.endDate) {
-                filter.fetchedAt.$lte = new Date(query.endDate);
+                filter.fetchedAt.$lte = fromBrazilTimeToUTC(query.endDate);
             }
         }
 
@@ -360,10 +366,10 @@ Seja conciso, objetivo e forneça recomendações práticas focadas em produçã
         if (query.startDate || query.endDate) {
             filter.fetchedAt = {};
             if (query.startDate) {
-                filter.fetchedAt.$gte = new Date(query.startDate);
+                filter.fetchedAt.$gte = fromBrazilTimeToUTC(query.startDate);
             }
             if (query.endDate) {
-                filter.fetchedAt.$lte = new Date(query.endDate);
+                filter.fetchedAt.$lte = fromBrazilTimeToUTC(query.endDate);
             }
         }
 
