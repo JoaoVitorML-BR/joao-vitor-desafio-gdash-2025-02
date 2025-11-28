@@ -12,14 +12,22 @@ export const authService = {
             });
 
             return response.data;
-        } catch (error) {
-            if (error instanceof AxiosError && error.response) {
-                throw {
-                    message: error.response.data?.message || 'Erro ao fazer login',
-                    statusCode: error.response.status,
-                    error: error.response.data?.error,
-                } as ApiErrorResponse;
+        } catch (error) {            
+            if (error instanceof AxiosError) {
+                if (error.response) {
+                    throw {
+                        message: error.response.data?.message || 'Erro ao fazer login',
+                        statusCode: error.response.status,
+                        error: error.response.data?.error,
+                    } as ApiErrorResponse;
+                } else if (error.request) {
+                    throw {
+                        message: 'Servidor não respondeu',
+                        statusCode: 0,
+                    } as ApiErrorResponse;
+                }
             }
+            
             throw {
                 message: 'Erro de conexão com o servidor',
                 statusCode: 0,
