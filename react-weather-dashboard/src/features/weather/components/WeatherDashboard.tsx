@@ -1,4 +1,14 @@
 import { useState } from 'react';
+import {
+    ResponsiveContainer,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    CartesianGrid,
+    Legend,
+} from 'recharts';
 import { RefreshCw, Download } from 'lucide-react';
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -112,10 +122,10 @@ export function WeatherDashboard() {
 
     return (
         <div className="space-y-6">
-            {/* Filtros */}
+            {/* Filters */}
             <WeatherFilters onFilter={handleFilter} onClear={handleClearFilters} />
 
-            {/* Header com botão refresh e limpar filtros */}
+            {/* Header with refresh and clear filters buttons */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold">Dashboard Climático</h2>
@@ -144,7 +154,7 @@ export function WeatherDashboard() {
                 </div>
             </div>
 
-            {/* Cards com dados principais */}
+            {/* Cards with main data */}
             <div className="grid gap-4 md:grid-cols-3">
                 <Card className="p-6">
                     <div className="space-y-2">
@@ -179,10 +189,40 @@ export function WeatherDashboard() {
                 </Card>
             </div>
 
+            <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Tendências Climáticas</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={data.slice().reverse()} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="colorHumidity" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="colorRain" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                            </linearGradient>
+                        </defs>
+                        <XAxis dataKey="fetchedAt" tickFormatter={formatDateTimeBR} minTickGap={30} fontSize={12} />
+                        <YAxis fontSize={12} />
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <Tooltip labelFormatter={formatDateTimeBR} formatter={(value, name) => [`${value}${name === 'temperature' ? '°C' : name === 'humidity' ? '%' : name === 'precipitationProbability' ? '%' : ''}`, name === 'temperature' ? 'Temperatura' : name === 'humidity' ? 'Umidade' : name === 'precipitationProbability' ? 'Chuva' : name]} />
+                        <Legend />
+                        <Line type="monotone" dataKey="temperature" stroke="#3b82f6" strokeWidth={2} dot={false} activeDot={{ r: 6 }} name="Temperatura" fillOpacity={1} fill="url(#colorTemp)" />
+                        <Line type="monotone" dataKey="humidity" stroke="#06b6d4" strokeWidth={2} dot={false} name="Umidade" fillOpacity={1} fill="url(#colorHumidity)" />
+                        <Line type="monotone" dataKey="precipitationProbability" stroke="#6366f1" strokeWidth={2} dot={false} name="Chuva" fillOpacity={1} fill="url(#colorRain)" />
+                    </LineChart>
+                </ResponsiveContainer>
+            </Card>
+
             {/* AI Insights Card */}
             <AIInsightsCard startDate={filters.startDate} endDate={filters.endDate} />
 
-            {/* Tabela simples com últimos registros */}
+            {/* Simple table of latest records */}
             <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Últimos Registros</h3>
                 <div className="overflow-x-auto">
