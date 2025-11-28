@@ -1,4 +1,4 @@
-import { Cloud, UserPlus, ChevronDown } from 'lucide-react';
+import { Cloud, UserPlus, ChevronDown, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -43,15 +43,8 @@ export default function Navbar() {
                                     className="gap-2 cursor-pointer"
                                     onClick={() => navigate('/home')}
                                 >
-                                    <UserPlus className="w-4 h-4" />
-                                    <span>Inicio</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    className="gap-2 cursor-pointer"
-                                    onClick={() => navigate('/users/create')}
-                                >
-                                    <UserPlus className="w-4 h-4" />
-                                    <span>Cadastrar Usuário</span>
+                                    <Home className="w-4 h-4" />
+                                    <span>Início</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                     className="gap-2 cursor-pointer"
