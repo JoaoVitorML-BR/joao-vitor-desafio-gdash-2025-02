@@ -115,15 +115,15 @@ export function WeatherDashboard() {
             {/* Filtros */}
             <WeatherFilters onFilter={handleFilter} onClear={handleClearFilters} />
 
-            {/* Header com botão refresh */}
-            <div className="flex items-center justify-between">
+            {/* Header com botão refresh e limpar filtros */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold">Dashboard Climático</h2>
                     <p className="text-sm text-muted-foreground">
                         Mostrando {data.length} de {total} registros
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 items-center">
                     <Button onClick={handleExportCsv} variant="outline" size="sm">
                         <Download className="mr-2 h-4 w-4" />
                         CSV
@@ -136,6 +136,11 @@ export function WeatherDashboard() {
                         <RefreshCw className="mr-2 h-4 w-4" />
                         Atualizar
                     </Button>
+                    {hasFilters && (
+                        <Button onClick={handleClearFilters} variant="destructive" size="sm" className="hover:text-white hover:bg-red-800">
+                            Limpar Filtros
+                        </Button>
+                    )}
                 </div>
             </div>
 
