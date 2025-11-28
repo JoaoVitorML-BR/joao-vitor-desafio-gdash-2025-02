@@ -9,6 +9,7 @@ import { WeatherQueryDto } from './dto/weather-query.dto';
 import { PaginatedResult, WeatherInsights } from './dto/weather-response.dto';
 import { OpenRouterService } from '../../common/service/openrouter.service';
 import { OpenRouterMessage } from '../../common/interfaces/openrouter.interface';
+import { toBrazilTime } from '../../common/utils/date.utils';
 
 @Injectable()
 export class WeatherService {
@@ -336,7 +337,7 @@ Seja conciso, objetivo e forneça recomendações práticas focadas em produçã
             csvRows.push(
                 [
                     log.externalId,
-                    new Date(log.fetchedAt).toISOString(),
+                    toBrazilTime(log.fetchedAt),
                     log.latitude,
                     log.longitude,
                     log.temperature ?? '',
@@ -348,9 +349,9 @@ Seja conciso, objetivo e forneça recomendações práticas focadas em produçã
 
         const csvContent = csvRows.join('\n');
 
-        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename=weather-data-${Date.now()}.csv`);
-        res.send(csvContent);
+        res.send('\uFEFF' + csvContent);
     }
 
     async exportToXlsx(query: WeatherQueryDto, res: Response): Promise<void> {
@@ -384,7 +385,7 @@ Seja conciso, objetivo e forneça recomendações práticas focadas em produçã
         logs.forEach(log => {
             worksheet.addRow({
                 id: log.externalId,
-                fetchedAt: new Date(log.fetchedAt).toISOString(),
+                fetchedAt: toBrazilTime(log.fetchedAt),
                 latitude: log.latitude,
                 longitude: log.longitude,
                 temperature: log.temperature,
