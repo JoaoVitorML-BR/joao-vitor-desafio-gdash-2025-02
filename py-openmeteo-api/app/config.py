@@ -8,7 +8,7 @@ load_dotenv()
 # Coordinates (strings preserved until cast)
 OPENMETEO_LAT = os.getenv("OPENMETEO_LAT")
 OPENMETEO_LON = os.getenv("OPENMETEO_LON")
-INTERVAL_MINUTES = int(os.getenv("OPENMETEO_INTERVAL_MINUTES", "1"))
+INTERVAL_MINUTES = int(os.getenv("OPENMETEO_INTERVAL_MINUTES", "60"))
 
 # RabbitMQ settings
 RABBITMQ_URL = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")

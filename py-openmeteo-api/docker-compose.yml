@@ -28,7 +28,7 @@ services:
     environment:
       - OPENMETEO_LAT=${OPENMETEO_LAT:--23.55052}
       - OPENMETEO_LON=${OPENMETEO_LON:--46.633308}
-      - OPENMETEO_INTERVAL_MINUTES=${OPENMETEO_INTERVAL_MINUTES:-1}
+      - OPENMETEO_INTERVAL_MINUTES=${OPENMETEO_INTERVAL_MINUTES:-60}
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
       - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-weather_logs_queue}
     depends_on:
