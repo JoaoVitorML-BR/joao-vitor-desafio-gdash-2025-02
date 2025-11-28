@@ -41,21 +41,53 @@ export const weatherService = {
         return response.data;
     },
 
-    exportCsv(params: WeatherFilters = {}): string {
-        const queryString = new URLSearchParams({
-            ...(params.startDate && { startDate: params.startDate }),
-            ...(params.endDate && { endDate: params.endDate }),
-        }).toString();
+    async exportCsv(params: WeatherFilters = {}): Promise<void> {
+        const response = await axios.get(`${API_VERSION}/weather/export/csv`, {
+            params: {
+                ...(params.startDate && { startDate: params.startDate }),
+                ...(params.endDate && { endDate: params.endDate }),
+                ...(params.minTemp !== undefined && { minTemp: params.minTemp }),
+                ...(params.maxTemp !== undefined && { maxTemp: params.maxTemp }),
+                ...(params.minHumidity !== undefined && { minHumidity: params.minHumidity }),
+                ...(params.maxHumidity !== undefined && { maxHumidity: params.maxHumidity }),
+            },
+            responseType: 'blob',
+        });
 
-        return `${API_VERSION}/weather/export/csv${queryString ? `?${queryString}` : ''}`;
+        const blob = new Blob([response.data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `weather-data-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     },
 
-    exportXlsx(params: WeatherFilters = {}): string {
-        const queryString = new URLSearchParams({
-            ...(params.startDate && { startDate: params.startDate }),
-            ...(params.endDate && { endDate: params.endDate }),
-        }).toString();
+    async exportXlsx(params: WeatherFilters = {}): Promise<void> {
+        const response = await axios.get(`${API_VERSION}/weather/export/xlsx`, {
+            params: {
+                ...(params.startDate && { startDate: params.startDate }),
+                ...(params.endDate && { endDate: params.endDate }),
+                ...(params.minTemp !== undefined && { minTemp: params.minTemp }),
+                ...(params.maxTemp !== undefined && { maxTemp: params.maxTemp }),
+                ...(params.minHumidity !== undefined && { minHumidity: params.minHumidity }),
+                ...(params.maxHumidity !== undefined && { maxHumidity: params.maxHumidity }),
+            },
+            responseType: 'blob',
+        });
 
-        return `${API_VERSION}/weather/export/xlsx${queryString ? `?${queryString}` : ''}`;
+        const blob = new Blob([response.data], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `weather-data-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     },
 };
