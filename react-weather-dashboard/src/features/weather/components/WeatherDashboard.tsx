@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Download } from 'lucide-react';
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { useWeatherData } from '../hooks/useWeatherData';
 import { WeatherFilters } from './WeatherFilters';
 import { AIInsightsCard } from '../../../components/weather/AIInsightsCard';
+import { weatherService } from '../../../services/weather.service';
 import type { WeatherFilters as WeatherFiltersType } from '../types/weather.types';
 import { WEATHER_CONSTANTS } from '../constants/weather.constants';
 import { hasActiveFilters, formatDateTimeBR } from '../utils/weather.utils';
@@ -34,6 +35,22 @@ export function WeatherDashboard() {
 
     const handleRefresh = () => {
         refetch();
+    };
+
+    const handleExportCsv = async () => {
+        try {
+            await weatherService.exportCsv(filters);
+        } catch (err) {
+            console.error('Erro ao exportar CSV:', err);
+        }
+    };
+
+    const handleExportXlsx = async () => {
+        try {
+            await weatherService.exportXlsx(filters);
+        } catch (err) {
+            console.error('Erro ao exportar XLSX:', err);
+        }
     };
 
     const hasFilters = hasActiveFilters(filters); if (loading) {
@@ -106,10 +123,20 @@ export function WeatherDashboard() {
                         Mostrando {data.length} de {total} registros
                     </p>
                 </div>
-                <Button onClick={handleRefresh} variant="outline" size="sm">
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Atualizar
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={handleExportCsv} variant="outline" size="sm">
+                        <Download className="mr-2 h-4 w-4" />
+                        CSV
+                    </Button>
+                    <Button onClick={handleExportXlsx} variant="outline" size="sm">
+                        <Download className="mr-2 h-4 w-4" />
+                        XLSX
+                    </Button>
+                    <Button onClick={handleRefresh} variant="outline" size="sm">
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Atualizar
+                    </Button>
+                </div>
             </div>
 
             {/* Cards com dados principais */}
