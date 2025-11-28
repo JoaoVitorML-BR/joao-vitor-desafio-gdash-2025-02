@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
   UsePipes,
@@ -54,16 +55,22 @@ export class UsersController {
       ],
     },
   })
-  async findAll() {
-    const users = await this.usersService.findAll();
-    return users.map(user => ({
-      id: user._id.toString(),
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
-    }));
+  async findAll(@Query('page') page = 1, @Query('limit') limit = 6) {
+    const users = await this.usersService.findAll(page, limit);
+    return {
+      data: users.data.map(user => ({
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      })),
+      total: users.total,
+      page: users.page,
+      limit: users.limit,
+      totalPages: users.totalPages
+    };
   }
 
   @UseGuards(JwtAuthGuard)
