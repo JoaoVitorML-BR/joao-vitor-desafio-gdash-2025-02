@@ -2,9 +2,9 @@
 # 🌦️ GDASH 2025-02 - Weather Monitoring System
 
 ## 📹 Vídeo explicativo
+[![Demonstração em vídeo](https://img.youtube.com/vi/GNXF8Uf2SYY/0.jpg)](https://youtu.be/GNXF8Uf2SYY)
 
-[![Assista ao vídeo explicativo](https://img.youtube.com/vi/a-p6YAzUXZY/0.jpg)](https://youtu.be/a-p6YAzUXZY)
-> Link direto: https://youtu.be/a-p6YAzUXZY
+Demonstração completa do sistema funcionando: [https://youtu.be/GNXF8Uf2SYY](https://youtu.be/GNXF8Uf2SYY)
 
 Real-time weather monitoring system with microservices architecture. Collects climate data from Alagoas, Brazil and provides REST API with authentication.
 
